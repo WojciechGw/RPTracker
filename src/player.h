@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define is_shift_down() (key(KEY_LEFTSHIFT) || key(KEY_RIGHTSHIFT))
+
 typedef struct {
     bool is_playing;
     uint8_t ticks_per_row; // Standard tracker speed (default 6)
@@ -30,5 +32,8 @@ extern void handle_navigation(void);
 extern void handle_transport_controls(void);
 extern void sequencer_step(void);
 extern void handle_editing(void);
+extern void modify_volume(int8_t delta);
+extern void modify_instrument(int8_t delta);
+extern void modify_note(int8_t delta);
 
 #endif

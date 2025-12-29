@@ -102,16 +102,17 @@ void player_tick(void) {
     if (key_pressed(KEY_F1)) { if (current_octave > 0) current_octave--; update_dashboard(); }
     if (key_pressed(KEY_F2)) { if (current_octave < 8) current_octave++; update_dashboard(); }
 
-    if (key_pressed(KEY_F3)) { 
-        current_instrument--;
-        OPL_SetPatch(cur_channel, &gm_bank[current_instrument]);
-        update_dashboard();
-    }
-    if (key_pressed(KEY_F4)) { 
-        current_instrument++; // int8 wraps naturally
-        OPL_SetPatch(cur_channel, &gm_bank[current_instrument]);
-        update_dashboard();
-    }
+    // if (key_pressed(KEY_F3)) { 
+    //     current_instrument--;
+    //     OPL_SetPatch(cur_channel, &gm_bank[current_instrument]);
+    //     update_dashboard();
+    // }
+    // if (key_pressed(KEY_F4)) { 
+    //     current_instrument++; // int8 wraps naturally
+    //     OPL_SetPatch(cur_channel, &gm_bank[current_instrument]);
+    //     update_dashboard();
+    // }
+
     if (key_pressed(KEY_F5)) { // Use F5 to "Pick" the instrument under the cursor
         PatternCell cell;
         read_cell(cur_pattern, cur_row, cur_channel, &cell);
@@ -122,16 +123,29 @@ void player_tick(void) {
         }
     }
 
-    // Volume Down ([)
-    if (key_pressed(KEY_LEFTBRACE)) {
-        if (current_volume > 0) current_volume--;
-        update_dashboard();
-    }
-    // Volume Up (])
-    if (key_pressed(KEY_RIGHTBRACE)) {
-        if (current_volume < 63) current_volume++;
-        update_dashboard();
-    }
+    // // Volume Down ([)
+    // if (key_pressed(KEY_LEFTBRACE)) {
+    //     if (current_volume > 0) current_volume--;
+    //     update_dashboard();
+    // }
+    // // Volume Up (])
+    // if (key_pressed(KEY_RIGHTBRACE)) {
+    //     if (current_volume < 63) current_volume++;
+    //     update_dashboard();
+    // }
+
+    // Volume: [ and ] (with Shift detection inside modify_volume)
+    if (key_pressed(KEY_LEFTBRACE))  modify_volume(-1);
+    if (key_pressed(KEY_RIGHTBRACE)) modify_volume(1);
+    
+    // Instrument: F3 and F4
+    if (key_pressed(KEY_F3)) modify_instrument(-1);
+    if (key_pressed(KEY_F4)) modify_instrument(1);
+
+    // Note Adjustment: - and =
+    if (key_pressed(KEY_MINUS)) modify_note(-1);
+    if (key_pressed(KEY_EQUAL)) modify_note(1);
+
 }
 
 void handle_navigation() {
@@ -282,5 +296,92 @@ void handle_editing(void) {
         render_row(cur_row);
         if (cur_row < 31) cur_row++; 
     }
+}
 
+void modify_volume(int8_t delta) {
+    if (is_shift_down()) {
+        // --- IN-PLACE CELL EDIT ONLY ---
+        PatternCell cell;
+        read_cell(cur_pattern, cur_row, cur_channel, &cell);
+        
+        // Apply delta to cell volume (bound 0-63)
+        int16_t new_vol = (int16_t)cell.vol + delta;
+        if (new_vol > 63) new_vol = 63;
+        if (new_vol < 0)  new_vol = 0;
+        cell.vol = (uint8_t)new_vol;
+        
+        write_cell(cur_pattern, cur_row, cur_channel, &cell);
+        render_row(cur_row); // Update the grid color immediately
+        
+        // Live Preview: Update the OPL2 hardware so you hear the change
+        OPL_SetVolume(cur_channel, cell.vol << 1);
+    } 
+    else {
+        // --- GLOBAL BRUSH EDIT ONLY ---
+        int16_t new_brush_vol = (int16_t)current_volume + delta;
+        if (new_brush_vol > 63) new_brush_vol = 63;
+        if (new_brush_vol < 0)  new_brush_vol = 0;
+        current_volume = (uint8_t)new_brush_vol;
+        
+        update_dashboard(); // Update the "VOL" hex at the top
+    }
+}
+
+void modify_instrument(int8_t delta) {
+    if (is_shift_down()) {
+        // --- IN-PLACE CELL EDIT ONLY ---
+        PatternCell cell;
+        read_cell(cur_pattern, cur_row, cur_channel, &cell);
+        
+        // 8-bit wrap-around logic
+        cell.inst = (uint8_t)(cell.inst + delta);
+        
+        write_cell(cur_pattern, cur_row, cur_channel, &cell);
+        render_row(cur_row);
+        
+        // Live Preview: Update OPL2 patch immediately
+        OPL_SetPatch(cur_channel, &gm_bank[cell.inst]);
+    } 
+    else {
+        // --- GLOBAL BRUSH EDIT ONLY ---
+        current_instrument = (uint8_t)(current_instrument + delta);
+        update_dashboard(); // Update the "INS" hex at the top
+    }
+}
+
+void modify_note(int8_t delta) {
+    if (is_shift_down()) {
+        // --- IN-PLACE CELL EDIT ONLY ---
+        PatternCell cell;
+        read_cell(cur_pattern, cur_row, cur_channel, &cell);
+        
+        // Only transpose if there is an actual note (not empty/Note-Off)
+        if (cell.note > 0 && cell.note < 255) {
+            int16_t new_note = (int16_t)cell.note + delta;
+            
+            // OPL2/MIDI Range Clamping (C-0 to B-8 is safe)
+            if (new_note < 12)  new_note = 12;
+            if (new_note > 119) new_note = 119;
+            
+            cell.note = (uint8_t)new_note;
+            
+            write_cell(cur_pattern, cur_row, cur_channel, &cell);
+            render_row(cur_row); // Update the white C-4 text
+            
+            // Live Preview: Play the new note immediately so user hears the pitch
+            OPL_NoteOff(cur_channel);
+            OPL_SetPatch(cur_channel, &gm_bank[cell.inst]);
+            OPL_SetVolume(cur_channel, cell.vol << 1);
+            OPL_NoteOn(cur_channel, cell.note);
+        }
+    } 
+    else {
+        // --- GLOBAL BRUSH EDIT ---
+        // Since +/- are "note" keys, it makes sense for them to 
+        // adjust the Octave when Shift is NOT held.
+        if (delta > 0 && current_octave < 8) current_octave++;
+        if (delta < 0 && current_octave > 0) current_octave--;
+        
+        update_dashboard(); // Update the "OCT" display at the top
+    }
 }
