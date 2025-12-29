@@ -4,11 +4,7 @@
 #include <stdio.h>
 #include "opl.h"
 #include "instruments.h"
-
-#include <errno.h>
-
-#include <fcntl.h>
-#include <unistd.h>
+#include "constants.h"
 
 // F-Number table for Octave 4 @ 4.0 MHz
 const uint16_t fnum_table[12] = {
@@ -43,7 +39,8 @@ uint16_t midi_to_opl_freq(uint8_t midi_note) {
     return (high_byte << 8) | low_byte;
 }
 
-void opl_write(uint8_t reg, uint8_t data) {
+void OPL_Write(uint8_t reg, uint8_t data) {
+    // printf("OPL_Write: Reg=0x%02X Data=0x%02X Addr=0x%04X\n", reg, data, OPL_ADDR);
     RIA.addr1 = OPL_ADDR; // OPL Write Index
     RIA.step1 = 1;
     
@@ -52,15 +49,15 @@ void opl_write(uint8_t reg, uint8_t data) {
     // Any delays are now handled by the FIFO in hardware
 }
 
-void opl_silence_all() {
+void OPL_SilenceAll() {
     // Send Note-Off to all 9 channels
     // We let these go through the FIFO so they are timed correctly
     for (uint8_t i = 0; i < 9; i++) {
-        opl_write(0xB0 + i, 0x00);
+        OPL_Write(0xB0 + i, 0x00);
     }
 }
 
-void opl_fifo_clear() {
+void OPL_FifoClear() {
     RIA.addr1 = OPL_ADDR + 2; // Our new FIFO flush register
     RIA.step1 = 0;
     RIA.rw1 = 1;         // Trigger flush
@@ -76,20 +73,20 @@ void OPL_NoteOn(uint8_t channel, uint8_t midi_note) {
     }
     
     uint16_t freq = midi_to_opl_freq(midi_note);
-    opl_write(0xA0 + channel, freq & 0xFF);
-    opl_write(0xB0 + channel, (freq >> 8) & 0xFF);
+    OPL_Write(0xA0 + channel, freq & 0xFF);
+    OPL_Write(0xB0 + channel, (freq >> 8) & 0xFF);
     shadow_b0[channel] = (freq >> 8) & 0x1F;
 }
 
 void OPL_NoteOff(uint8_t channel) {
     if (channel > 8) return;
-    opl_write(0xB0 + channel, shadow_b0[channel]); // Write stored octave/freq with KeyOn=0
+    OPL_Write(0xB0 + channel, shadow_b0[channel]); // Write stored octave/freq with KeyOn=0
 }
 
 // Clear all 256 registers correctly
-void opl_clear() {
+void OPL_Clear() {
     for (int i = 0; i < 256; i++) {
-        opl_write(i, 0x00);
+        OPL_Write(i, 0x00);
     }
     // Reset shadow memory
     for (int i=0; i<9; i++) shadow_b0[i] = 0;
@@ -105,14 +102,14 @@ void OPL_SetVolume(uint8_t chan, uint8_t velocity) {
     
     // Write to Carrier (this affects the audible volume most)
     // Mask with 0xC0 to preserve Key Scale Level bits
-    opl_write(0x40 + car_offsets[chan], (shadow_ksl_c[chan] & 0xC0) | vol);
+    OPL_Write(0x40 + car_offsets[chan], (shadow_ksl_c[chan] & 0xC0) | vol);
 }
 
-void opl_init() {
+void OPL_Init() {
     // 1. Silence all 9 channels immediately (Key-Off)
     // Register 0xB0-0xB8 controls Key-On
     for (uint8_t i = 0; i < 9; i++) {
-        opl_write(0xB0 + i, 0x00);
+        OPL_Write(0xB0 + i, 0x00);
         shadow_b0[i] = 0;
     }
 
@@ -120,7 +117,7 @@ void opl_init() {
     // This ensures that leftovers from a previous program 
     // (like long Release times or weird Waveforms) are gone.
     for (int i = 0x01; i <= 0xF5; i++) {
-        opl_write(i, 0x00);
+        OPL_Write(i, 0x00);
     }
 
     for (int i = 0; i < 9; i++) {
@@ -129,14 +126,14 @@ void opl_init() {
     }
 
     // 3. Re-enable the features we need
-    opl_write(0x01, 0x20); // Enable Waveform Select
-    opl_write(0xBD, 0x00); // Ensure Melodic Mode
+    OPL_Write(0x01, 0x20); // Enable Waveform Select
+    OPL_Write(0xBD, 0x00); // Ensure Melodic Mode
 }
 
-void opl_silence() {
+void OPL_Silence() {
     // Just kill the 9 voices (Key-Off)
     for (uint8_t i = 0; i < 9; i++) {
-        opl_write(0xB0 + i, 0x00);
+        OPL_Write(0xB0 + i, 0x00);
         shadow_b0[i] = 0;
     }
 }
@@ -144,7 +141,7 @@ void opl_silence() {
 uint32_t song_xram_ptr = 0;
 uint16_t wait_ticks = 0;
 
-void opl_fifo_flush() {
+void OPL_FifoFlush() {
     // Ensure the Magic Key (0xAA) matches our Verilog flush logic
     RIA.addr1 = OPL_ADDR + 2;
     RIA.step1 = 0;
@@ -152,8 +149,8 @@ void opl_fifo_flush() {
 }
 
 void shutdown_audio() {
-    opl_silence_all();       // Kill any playing notes
-    opl_fifo_flush();        // Clear the hardware buffer
+    OPL_SilenceAll();       // Kill any playing notes
+    OPL_FifoFlush();        // Clear the hardware buffer
     OPL_Config(0, OPL_ADDR);   // Tell the FPGA to stop listening to the PIX bus
 }
 
@@ -165,136 +162,3 @@ void OPL_Config(uint8_t enable, uint16_t addr) {
     xregn(2, 0, 0, 2, enable, addr);
     
 }
-
-static int music_fd = -1;
-static uint8_t music_buffer[512];
-static uint16_t music_buf_idx = 0;
-static uint16_t music_bytes_ready = 0; 
-static uint16_t music_wait_ticks = 0;
-static bool music_error_state = false;
-
-void music_init(const char* filename) {
-    if (music_fd >= 0) close(music_fd);
-    music_fd = open(filename, O_RDONLY);
-    
-    music_buf_idx = 0;
-    music_wait_ticks = 0;
-    music_error_state = (music_fd < 0);
-
-    if (music_error_state) {
-        printf("Music: Failed to open %s\n", filename);
-        return;
-    }
-
-    // 1. Read into the START of the buffer (index 0)
-    int res = read(music_fd, music_buffer, 512);
-                
-    if (res < 0) {
-        int err = errno;
-        printf("Music: Initial Read Error %d\n", err);
-        music_error_state = true;
-        return;
-    }
-
-    // 2. IMPORTANT: Update the count of valid bytes in the buffer
-    // Without this, the sequencer thinks the buffer is empty!
-    music_bytes_ready = res; 
-    
-   //  printf("Music: Started. Initialized with %d bytes.\n", res);
-}
-
-void update_music() {
-    if (music_error_state || music_fd < 0) return;
-
-    if (music_wait_ticks > 0) {
-        music_wait_ticks--;
-    }
-
-    if (music_wait_ticks == 0) {
-        while (music_wait_ticks == 0) {
-
-            if (music_buf_idx >= 512){
-                // printf("Music: Buffer Refill Triggered.\n");
-                
-                int res = read(music_fd, &music_buffer, 512);
-                
-                if (res < 0) {
-                    int err = errno;
-                    printf("Music: Read Error %d\n", err);
-                    music_error_state = true;
-                    return;
-                }
-
-                music_buf_idx = 0;
-            }
-
-            // --- 4-BYTE PACKET ACCESS ---
-            uint8_t reg  = music_buffer[music_buf_idx++];
-            uint8_t val  = music_buffer[music_buf_idx++];
-            uint8_t d_lo = music_buffer[music_buf_idx++];
-            uint8_t d_hi = music_buffer[music_buf_idx++];
-            uint16_t delay = ((uint16_t)d_hi << 8) | d_lo;
-
-
-            if (reg == 0xFF && val == 0xFF) {
-                off_t seek_res = lseek(music_fd, 0, SEEK_SET);
-                // if (seek_res == -1) {
-                //     int err = errno;
-                //     printf("Music: Sentinel Lseek Error %d\n", err);
-                //     music_error_state = true;
-                // } else {
-                //     printf("Music: Loop Sentinel Correctly Processed.\n");
-                // }
-                
-                // probably not available in rp6502 for LLVM-MOS
-                // f_lseek(music_fd, 0, SEEK_SET);
-
-                // printf("Music: Sentinel Hit. Re-opening...\n");
-                // close(music_fd);
-                // music_fd = open(MUSIC_FILENAME, O_RDONLY);
-
-                music_buf_idx = 512; // Force buffer reload
-                delay = 1; // Small delay after loop
-
-            } else {
-                opl_write(reg, val);
-            }
-
-            if (delay > 0) {
-                music_wait_ticks = delay;
-            }
-
-        }
-    }
-}
-
-// void debug_test_lseek() {
-//     uint8_t start_bytes[4];
-//     uint8_t check_bytes[4];
-//     off_t pos;
-    
-//     // 1. Read first 4 bytes
-//     // pos = lseek(music_fd, 0, SEEK_SET);
-//     // printf("LSEEK TEST: Initial lseek to pos %ld\n", (long)pos);
-//     read(music_fd, start_bytes, 4);
-    
-//     // 2. Move away and move back
-//     // pos = lseek(music_fd, 1024, SEEK_SET); 
-//     // printf("LSEEK TEST: Moved to pos %ld\n", (long)pos);
-//     pos = lseek(music_fd, 0, SEEK_SET); 
-//     printf("LSEEK TEST: Returned to pos %ld\n", (long)pos);
-    
-//     // 3. Read again
-//     read(music_fd, check_bytes, 4);
-    
-//     printf("LSEEK TEST: First Read: %02X %02X %02X %02X\n", 
-//             start_bytes[0], start_bytes[1], start_bytes[2], start_bytes[3]);
-//     printf("LSEEK TEST: After Seek: %02X %02X %02X %02X\n", 
-//             check_bytes[0], check_bytes[1], check_bytes[2], check_bytes[3]);
-            
-//     if (start_bytes[0] == check_bytes[0] && start_bytes[1] == check_bytes[1]) {
-//         printf("RESULT: lseek is working correctly.\n");
-//     } else {
-//         printf("RESULT: lseek FAILED or returned inconsistent data!\n");
-//     }
-// }

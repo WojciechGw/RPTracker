@@ -15,7 +15,7 @@
 
 // 5. Keyboard, Gamepad and Sound
 // -------------------------------------------------------------------------
-#define OPL_CONFIG      0xFF00  // OPL2 Configuration
+#define OPL_ADDR        0xFF00  // OPL2 Configuration
 #define GAMEPAD_INPUT   0xFF78  // XRAM address for gamepad data
 #define KEYBOARD_INPUT  0xFFA0  // XRAM address for keyboard data
 #define PSG_XRAM_ADDR   0xFFC0  // PSG memory location (must match sound.c)

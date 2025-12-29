@@ -151,15 +151,15 @@ void OPL_SetPatch(uint8_t channel, const OPL_Patch* p) {
     // shadow_ksl_c[channel] = p->c_ksl;
     const uint8_t* p_bytes = (const uint8_t*)p;
 
-    opl_write(0x20 + m, p->m_ave);
-    opl_write(0x20 + c, p->c_ave);
-    opl_write(0x40 + m, p->m_ksl);
-    opl_write(0x40 + c, p->c_ksl);
-    opl_write(0x60 + m, p->m_atdec);
-    opl_write(0x60 + c, p->c_atdec);
-    opl_write(0x80 + m, p->m_susrel);
-    opl_write(0x80 + c, p->c_susrel);
-    opl_write(0xE0 + m, p->m_wave);
-    opl_write(0xE0 + c, p->c_wave);
-    opl_write(0xC0 + channel, p->feedback);
+    OPL_Write(0x20 + m, p->m_ave);
+    OPL_Write(0x20 + c, p->c_ave);
+    OPL_Write(0x40 + m, p->m_ksl);
+    OPL_Write(0x40 + c, p->c_ksl);
+    OPL_Write(0x60 + m, p->m_atdec);
+    OPL_Write(0x60 + c, p->c_atdec);
+    OPL_Write(0x80 + m, p->m_susrel);
+    OPL_Write(0x80 + c, p->c_susrel);
+    OPL_Write(0xE0 + m, p->m_wave);
+    OPL_Write(0xE0 + c, p->c_wave);
+    OPL_Write(0xC0 + channel, p->feedback);
 }

@@ -12,6 +12,7 @@
 
 // Keyboard state array and macro
 extern uint8_t keystates[KEYBOARD_BYTES];
+extern uint8_t prev_keystates[KEYBOARD_BYTES];
 extern bool handled_key;
 
 // Macro to check if a key is pressed

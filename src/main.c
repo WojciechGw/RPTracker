@@ -5,6 +5,7 @@
 #include "input.h"
 #include "instruments.h"
 #include "opl.h"
+#include "player.h"
 
 
 unsigned text_message_addr;         // Text message address
@@ -38,10 +39,21 @@ static void init_graphics(void)
     RIA.addr0 = text_message_addr;
     RIA.step0 = 1;
     for (uint16_t i = 0; i < MESSAGE_LENGTH; i++) {
+        if (i==16){
+            RIA.rw0 = 'H';
+            RIA.rw0 = HUD_COL_YELLOW;
+            RIA.rw0 = HUD_COL_BG;
+            continue;
+        } else {
         RIA.rw0 = ' ';
         RIA.rw0 = HUD_COL_WHITE;
         RIA.rw0 = HUD_COL_BG;
+        }
     }
+
+    printf("TEXT_CONFIG=0x%X\n", TEXT_CONFIG);
+    printf("Text Message Addr=0x%X\n", text_message_addr);
+    printf("Next Free XRAM Address: 0x%04X\n", text_storage_end);
 
 
 }
@@ -49,9 +61,11 @@ static void init_graphics(void)
 int main(void)
 {
 
+    // init_graphics();
+
     // Enable OPL2 sound
     OPL_Config(1, OPL_ADDR);
-    opl_init();
+    OPL_Init();
 
     // Enable keyboard input
     xregn(0, 0, 0, 1, KEYBOARD_INPUT);
@@ -59,6 +73,10 @@ int main(void)
     xregn(0, 0, 2, 1, GAMEPAD_INPUT);
 
     init_graphics();
+    init_input_system(); // From your input.c
+    // player_init();
+
+    OPL_SetPatch(0, &gm_bank[0]); // Set instrument 0 on channel 0
 
     uint8_t vsync_last = RIA.vsync;
 
@@ -67,7 +85,28 @@ int main(void)
         while (RIA.vsync == vsync_last);
         vsync_last = RIA.vsync;
 
-        // Main loop code here
+        // 1. Read hardware state into keystates bitmask
+        handle_input(); 
+
+        // 2. Process the "Piano" logic
+        player_tick();
+
+
+        // Now write the MESSAGE_LENGTH characters into text RAM (3 bytes per char)
+        RIA.addr0 = text_message_addr;
+        RIA.step0 = 1;
+        for (uint16_t i = 0; i < MESSAGE_LENGTH; i++) {
+            if (i==17){
+                RIA.rw0 = 'W';
+                RIA.rw0 = HUD_COL_YELLOW;
+                RIA.rw0 = HUD_COL_BG;
+                continue;
+            } else {
+            RIA.rw0 = ' ';
+            RIA.rw0 = HUD_COL_WHITE;
+            RIA.rw0 = HUD_COL_BG;
+            }
+        }
 
     }
 }

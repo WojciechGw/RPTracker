@@ -19,4 +19,5 @@ target_sources(RPTracker PRIVATE
     src/input.c
     src/instruments.c
     src/opl.c
+    src/player.c
 )
