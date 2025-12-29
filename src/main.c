@@ -115,10 +115,8 @@ int main(void)
         // Check Transport (Play/Stop)
         handle_transport_controls();
 
-        if (!seq.is_playing) {
-            handle_navigation();
-            handle_editing(); // Check for backspace/delete
-        }
+        handle_navigation();
+        handle_editing(); // Check for backspace/delete
 
         // The Sequencer "Heartbeat"
         sequencer_step();

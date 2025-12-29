@@ -67,25 +67,23 @@ void player_tick(void) {
     // 2. Logic: Note On & Recording
     if (note_pressed_this_frame) {
         if (target_note != active_midi_note) {
-            // Stop previous note if still playing
-            if (active_midi_note != 0) OPL_NoteOff(channel); 
-        
+            // Live Overdrive: Cut the sequencer's note and play the keyboard note
+            OPL_NoteOff(channel); 
             OPL_SetPatch(channel, &gm_bank[current_instrument]);
-            OPL_SetVolume(channel, current_volume << 1); // Apply volume!
+            OPL_SetVolume(channel, current_volume << 1); 
             OPL_NoteOn(channel, target_note);
-            
             active_midi_note = target_note;
 
             if (edit_mode) {
-                PatternCell c;
-                c.note = target_note;
-                c.inst = current_instrument;
-                c.vol = current_volume; // Record the volume to XRAM
-                c.effect = 0;
-                
+                PatternCell c = {target_note, current_instrument, current_volume, 0};
                 write_cell(cur_pattern, cur_row, cur_channel, &c);
                 render_row(cur_row);
-                if (cur_row < 31) cur_row++;
+                
+                // ONLY advance the row if the sequencer IS NOT playing.
+                // If the sequencer IS playing, it is already advancing the row for us.
+                if (!seq.is_playing) {
+                    if (cur_row < 31) cur_row++;
+                }
             }
             
         }
@@ -206,36 +204,30 @@ void handle_navigation() {
 
 void sequencer_step(void) {
     if (!seq.is_playing) return;
-
     seq.tick_counter++;
 
     if (seq.tick_counter >= seq.ticks_per_row) {
         seq.tick_counter = 0;
 
         uint8_t old_row = cur_row;
-        // Advance row logic...
         if (cur_row < 31) cur_row++; else cur_row = 0;
 
         for (uint8_t ch = 0; ch < 9; ch++) {
+            // Priority: If the user is jamming on this channel, don't play sequenced note
+            if (ch == cur_channel && active_midi_note != 0) continue;
+
             PatternCell cell;
             read_cell(cur_pattern, cur_row, ch, &cell);
             
             if (cell.note != 0) {
-                // 1. Always stop the previous sound on this channel first
                 OPL_NoteOff(ch); 
-                
                 if (cell.note != 255) {
-                    // 2. Load the new patch
                     OPL_SetPatch(ch, &gm_bank[cell.inst]);
-                    OPL_SetVolume(ch, cell.vol << 1); // Apply recorded volume
-                    
-                    // 3. Trigger the new note
-                    // The FPGA FIFO handles these back-to-back writes perfectly
+                    OPL_SetVolume(ch, cell.vol << 1); 
                     OPL_NoteOn(ch, cell.note);
                 }
             }
         }
-
         update_cursor_visuals(old_row, cur_row, cur_channel, cur_channel);
     }
 }

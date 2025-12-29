@@ -34,6 +34,11 @@ Use these while in **Edit Mode** to tweak the cell under the cursor without re-p
 *   **Tilde ( ` )**: Insert **Note Off** (`===`).
 *   **F5**: **Instrument Pick.** Samples the instrument ID from the grid into your global brush.
 
+### 5. Live Recording
+*   **F6 (Play) + Space (Edit):** Enables Live Recording.
+*   Play notes on the keyboard while the sequence is running to capture them into the grid in real-time.
+*   Move the cursor with **Arrows** while playing to jump between channels for multi-track jamming.
+
 ---
 
 ## 🖥 User Interface Guide
