@@ -321,4 +321,8 @@ void update_dashboard(void) {
         draw_string(60, 1, "STOPPED", HUD_COL_RED, HUD_COL_BG);
     }
 
+    // 5. Current Volume (Row 1, far right)
+    draw_string(45, 1, "VOL:", HUD_COL_CYAN, HUD_COL_BG);
+    draw_hex_byte(text_message_addr + (1 * 80 + 50) * 3, current_volume);
+
 }

@@ -10,6 +10,7 @@
 uint8_t current_instrument = 0; // Instrument index (0 = Piano)
 uint8_t current_octave = 4; // Adjusts in jumps of 12
 uint8_t active_midi_note = 0;      // Tracks the currently playing note
+uint8_t current_volume = 63; // Max volume (0x3F)
 
 SequencerState seq = {false, 6, 0, 125};
 
@@ -68,24 +69,25 @@ void player_tick(void) {
         if (target_note != active_midi_note) {
             // Stop previous note if still playing
             if (active_midi_note != 0) OPL_NoteOff(channel); 
-            
-            // Play new note
+        
+            OPL_SetPatch(channel, &gm_bank[current_instrument]);
+            OPL_SetVolume(channel, current_volume << 1); // Apply volume!
             OPL_NoteOn(channel, target_note);
+            
             active_midi_note = target_note;
 
-            // --- RECORDING LOGIC ---
             if (edit_mode) {
                 PatternCell c;
                 c.note = target_note;
-                c.inst = current_instrument; // Ensure this is the global 'brush'
-                c.vol = 63; 
+                c.inst = current_instrument;
+                c.vol = current_volume; // Record the volume to XRAM
                 c.effect = 0;
                 
                 write_cell(cur_pattern, cur_row, cur_channel, &c);
-                render_row(cur_row); // Draw what we just recorded
-                
-                if (cur_row < 31) cur_row++; // Advance
+                render_row(cur_row);
+                if (cur_row < 31) cur_row++;
             }
+            
         }
     } 
     // 3. Logic: Note Off
@@ -118,6 +120,17 @@ void player_tick(void) {
             OPL_SetPatch(cur_channel, &gm_bank[current_instrument]);
             update_dashboard();
         }
+    }
+
+    // Volume Down ([)
+    if (key_pressed(KEY_LEFTBRACE)) {
+        if (current_volume > 0) current_volume--;
+        update_dashboard();
+    }
+    // Volume Up (])
+    if (key_pressed(KEY_RIGHTBRACE)) {
+        if (current_volume < 63) current_volume++;
+        update_dashboard();
     }
 }
 
@@ -200,6 +213,7 @@ void sequencer_step(void) {
                 if (cell.note != 255) {
                     // 2. Load the new patch
                     OPL_SetPatch(ch, &gm_bank[cell.inst]);
+                    OPL_SetVolume(ch, cell.vol << 1); // Apply recorded volume
                     
                     // 3. Trigger the new note
                     // The FPGA FIFO handles these back-to-back writes perfectly

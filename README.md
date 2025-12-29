@@ -36,6 +36,11 @@ The keyboard is mapped into two octaves using a standard "FastTracker II" style 
 *   **F3 / F4:** Previous / Next Instrument. 
     *   *Wraps around* from `00` to `FF` for fast access to percussion kits at the end of the bank.
 
+### 6. Volume Control
+*   **[** (Left Bracket): Decrease current volume.
+*   **]** (Right Bracket): Increase current volume.
+*   **Range:** 00 (Silent) to 3F (Max Volume).
+
 ---
 
 ## 🖥 User Interface Guide

@@ -24,6 +24,7 @@ void player_tick(void);
 extern uint8_t current_octave;
 extern uint8_t current_instrument;
 extern uint8_t player_channel;
+extern uint8_t current_volume;
 
 extern void handle_navigation(void);
 extern void handle_transport_controls(void);
