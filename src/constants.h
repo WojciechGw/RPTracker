@@ -16,7 +16,12 @@ extern unsigned text_message_addr; // Address where text message starts in XRAM
 
 // 5. Keyboard, Gamepad and Sound
 // -------------------------------------------------------------------------
-#define OPL_ADDR        0xFF00  // OPL2 Configuration
+#ifdef USE_NATIVE_OPL2
+  #define OPL_ADDR 0xFE00 
+#else
+  #define OPL_ADDR 0xFF00 // Old FPGA PIX address
+#endif
+
 #define GAMEPAD_INPUT   0xFF78  // XRAM address for gamepad data
 #define KEYBOARD_INPUT  0xFFA0  // XRAM address for keyboard data
 #define PSG_XRAM_ADDR   0xFFC0  // PSG memory location (must match sound.c)

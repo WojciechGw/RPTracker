@@ -40,6 +40,13 @@ uint16_t midi_to_opl_freq(uint8_t midi_note) {
 }
 
 void OPL_Write(uint8_t reg, uint8_t data) {
+    
+    
+#ifdef USE_NATIVE_OPL2
+    RIA.addr1 = OPL_ADDR + reg;
+    RIA.rw1 = data;  // Write Data  (FF01)
+
+#else    // Native RIA OPL2 Write (Device 2, Channel 0)
     // printf("OPL_Write: Reg=0x%02X Data=0x%02X Addr=0x%04X\n", reg, data, OPL_ADDR);
     RIA.addr1 = OPL_ADDR; // OPL Write Index
     RIA.step1 = 1;
@@ -47,6 +54,7 @@ void OPL_Write(uint8_t reg, uint8_t data) {
     RIA.rw1 = reg;   // Write Index (FF00)
     RIA.rw1 = data;  // Write Data  (FF01)
     // Any delays are now handled by the FIFO in hardware
+#endif
 }
 
 void OPL_SilenceAll() {
@@ -157,8 +165,13 @@ void shutdown_audio() {
 
 void OPL_Config(uint8_t enable, uint16_t addr) {
     // Configure OPL Device in FPGA
-
+#ifdef USE_NATIVE_OPL2
+    // Native RIA OPL2 Initialization (Device 0, Channel 1)
+    xreg(0, 1, 0x01, addr); 
+    // xregn(0, 1, 0x01, 1, addr);
+#else
     // Args: dev(1), chan(0), reg(9), count(3)
     xregn(2, 0, 0, 2, enable, addr);
+#endif
     
 }

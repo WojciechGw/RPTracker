@@ -7,6 +7,16 @@ find_package(llvm-mos-sdk REQUIRED)
 
 project(MY-RP6502-PROJECT C CXX ASM)
 
+# Define the option (Default is OFF/FPGA)
+option(USE_NATIVE_OPL2 "Use the RIA native OPL2 support" OFF)
+
+if(USE_NATIVE_OPL2)
+    add_definitions(-DUSE_NATIVE_OPL2)
+    message(STATUS "Targeting: Native RIA OPL2")
+else()
+    message(STATUS "Targeting: FPGA TinyFPGA Sound Card")
+endif()
+
 add_executable(RPTracker)
 rp6502_executable(RPTracker
     DATA file
