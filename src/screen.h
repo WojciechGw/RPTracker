@@ -25,7 +25,7 @@ extern uint8_t cur_channel;
 
 extern void write_cell(uint8_t pat, uint8_t row, uint8_t chan, PatternCell *cell);
 extern void render_grid(void);
-extern void update_cursor_visuals(uint8_t old_row, uint8_t new_row);
+extern void update_cursor_visuals(uint8_t old_row, uint8_t new_row, uint8_t old_ch, uint8_t new_ch);
 extern void draw_headers(void);
 extern void draw_ui_dashboard(void);
 extern void clear_top_ui(void);

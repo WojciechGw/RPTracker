@@ -129,26 +129,26 @@ void handle_navigation() {
     uint8_t active_scancode = 0;
 
     // Detect which key is being held
-    if (key(KEY_DOWN))  active_scancode = KEY_DOWN;
+    if (key(KEY_DOWN))       active_scancode = KEY_DOWN;
     else if (key(KEY_UP))    active_scancode = KEY_UP;
     else if (key(KEY_LEFT))  active_scancode = KEY_LEFT;
     else if (key(KEY_RIGHT)) active_scancode = KEY_RIGHT;
 
     if (active_scancode != 0) {
         if (active_scancode != last_scancode) {
-            // First press
+            // First press: move immediately
             repeat_timer = 0;
-            if (active_scancode == KEY_DOWN) move_row = 1;
-            if (active_scancode == KEY_UP)   move_row = 2; // 2 = Up signal
+            if (active_scancode == KEY_DOWN)  move_row = 1;
+            if (active_scancode == KEY_UP)    move_row = 2; // Signal for 'Up'
             if (active_scancode == KEY_LEFT)  move_chan = -1;
             if (active_scancode == KEY_RIGHT) move_chan = 1;
         } else {
-            // Holding
+            // Holding: wait for repeat delay
             repeat_timer++;
             if (repeat_timer >= KEY_REPEAT_DELAY) {
                 if ((repeat_timer - KEY_REPEAT_DELAY) % KEY_REPEAT_RATE == 0) {
-                    if (active_scancode == KEY_DOWN) move_row = 1;
-                    if (active_scancode == KEY_UP)   move_row = 2;
+                    if (active_scancode == KEY_DOWN)  move_row = 1;
+                    if (active_scancode == KEY_UP)    move_row = 2;
                     if (active_scancode == KEY_LEFT)  move_chan = -1;
                     if (active_scancode == KEY_RIGHT) move_chan = 1;
                 }
@@ -157,16 +157,21 @@ void handle_navigation() {
     }
     last_scancode = active_scancode;
 
-    // Apply Row Movement with Bounds (Cap at 63)
+    // Track state to determine if we need a UI update
     uint8_t old_row = cur_row;
-    if (move_row == 1 && cur_row < 31) cur_row++; // Cap at 1F
+    uint8_t old_chan = cur_channel;
+
+    // Apply Row Movement (Capped at 0-31 for our 1F bottom alignment)
+    if (move_row == 1 && cur_row < 31) cur_row++; 
     if (move_row == 2 && cur_row > 0)  cur_row--;
 
-    // Apply Channel Movement with Bounds (Cap at 8)
+    // Apply Channel Movement (Capped at 0-8)
     if (move_chan == -1 && cur_channel > 0) cur_channel--;
     if (move_chan == 1  && cur_channel < 8) cur_channel++;
 
-    if (old_row != cur_row) {
-        update_cursor_visuals(old_row, cur_row);
+    // Optional: Toggle Edit mode with Space inside navigation
+    if (key_pressed(KEY_SPACE)) {
+        edit_mode = !edit_mode;
     }
+
 }

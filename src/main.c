@@ -69,7 +69,7 @@ int main(void)
     // 3. Initial State Draw
     update_dashboard();  // Draw the DYNAMIC values (The actual hex numbers)
     render_grid();       // Initial grid draw
-    update_cursor_visuals(0, 0); 
+    update_cursor_visuals(0, 0, 0 ,0); // Initial cursor at 0,0
 
     // 4. Software Initialization
     init_input_system(); 
@@ -81,26 +81,28 @@ int main(void)
     }
 
     uint8_t vsync_last = RIA.vsync;
+    uint8_t prev_row = 0;
+    uint8_t prev_chan = 0;
+    bool prev_edit_mode = false;
 
     while (1) {
         while (RIA.vsync == vsync_last);
         vsync_last = RIA.vsync;
 
+        // --- LOGIC STAGE ---
+        prev_row = cur_row;
+        prev_chan = cur_channel;
+        prev_edit_mode = edit_mode; // Track if we toggled record mode
+
         // --- INPUT STAGE ---
         handle_input(); // This MUST update keystates AND prev_keystates
-
-        // --- LOGIC STAGE ---
-        uint8_t prev_row = cur_row;
-        bool prev_edit_mode = edit_mode; // Track if we toggled record mode
-
         handle_navigation(); 
         player_tick();
-
-        // --- UI REFRESH STAGE ---
         
-        // If the row moved, update highlight
-        if (cur_row != prev_row) {
-            update_cursor_visuals(prev_row, cur_row);
+        // --- UI REFRESH: Row or Channel Movement
+        if (cur_row != prev_row || cur_channel != prev_chan) {
+            // We pass all 4 values to the visual update function
+            update_cursor_visuals(prev_row, cur_row, prev_chan, cur_channel);
         }
 
         // If something changed the instrument, octave, or edit mode
@@ -108,5 +110,6 @@ int main(void)
         if (edit_mode != prev_edit_mode) {
             update_dashboard(); 
         }
+
     }
 }
