@@ -32,5 +32,6 @@ extern void clear_top_ui(void);
 extern void update_dashboard(void);
 extern void render_row(uint8_t pattern_row_idx);
 extern void read_cell(uint8_t pat, uint8_t row, uint8_t chan, PatternCell *cell);
+extern void draw_string(uint8_t x, uint8_t y, const char* s, uint8_t fg, uint8_t bg);
 
 #endif // SCREEN_H

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "screen.h"
 #include "instruments.h"
+#include "song.h"
 
 // Current State
 uint8_t current_instrument = 0; // Instrument index (0 = Piano)
@@ -202,7 +203,22 @@ void sequencer_step(void) {
         seq.tick_counter = 0;
 
         uint8_t old_row = cur_row;
-        if (cur_row < 31) cur_row++; else cur_row = 0;
+        // if (cur_row < 31) cur_row++; else cur_row = 0;
+        if (cur_row < 31) {
+            cur_row++;
+        } else {
+            // END OF PATTERN REACHED
+            cur_row = 0;
+            
+            // Move to the next pattern in the Order List
+            cur_order_idx++;
+            if (cur_order_idx >= song_length) cur_order_idx = 0; // Loop song
+            
+            cur_pattern = read_order_xram(cur_order_idx);
+            
+            render_grid(); // Refresh the screen for the new pattern
+            update_dashboard();
+        }
 
         for (uint8_t ch = 0; ch < 9; ch++) {
             // Priority: If the user is jamming on this channel, don't play sequenced note

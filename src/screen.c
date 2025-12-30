@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "instruments.h"
 #include "player.h"
+#include "song.h"
 
 char message[MESSAGE_LENGTH + 1]; // Text message buffer (+1 for null terminator)
 
@@ -330,5 +331,7 @@ void update_dashboard(void) {
     // 6. Current Pattern (Row 2)
     draw_string(2, 2, "PATTERN:", HUD_COL_CYAN, HUD_COL_BG);
     draw_hex_byte(text_message_addr + (2 * 80 + 11) * 3, cur_pattern);
+
+    update_order_display();
 
 }
