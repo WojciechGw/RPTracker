@@ -85,6 +85,7 @@ extern unsigned text_message_addr; // Address where text message starts in XRAM
 #define HUD_COL_DPURPLE 61 // Dark Purple (Custom)
 #define HUD_COL_CYAN    14  // Bright Cyan   (Fixed)
 #define HUD_COL_WHITE   15  // Bright White
+#define HUD_COL_PURPLE 16  // Purple
 
 #define HUD_COL_SAGEGREEN 113 // Sage Green for text labels
 

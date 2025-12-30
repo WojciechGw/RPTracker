@@ -262,6 +262,51 @@ const OPL_Patch gm_bank[256] = {
     [255] = { .m_ave=0x05, .m_ksl=0x00, .m_atdec=0xF0, .m_susrel=0x77, .m_wave=0x00, .c_ave=0x00, .c_ksl=0x00, .c_atdec=0xFA, .c_susrel=0xEA, .c_wave=0x00, .feedback=0x0E },
 };
 
+const char* const patch_names[256] = {
+    /* 0-127: Standard General MIDI Bank */
+    "Piano 1", "Piano 2", "Piano 3", "Honky-tonk", "E. Piano 1", "E. Piano 2", "Harpsichord", "Clavinet",
+    "Celesta", "Glockenspiel", "Music Box", "Vibraphone", "Marimba", "Xylophone", "Tubular Bell", "Dulcimer",
+    "Drawbar Organ", "Perc. Organ", "Rock Organ", "Church Organ", "Reed Organ", "Accordion", "Harmonica", "Tango Accord.",
+    "Nylon Guitar", "Steel Guitar", "Jazz Guitar", "Clean Guitar", "Muted Guitar", "Overdrive Gtr", "Distortion Gtr", "Gtr Harmonics",
+    "Acoustic Bass", "Finger Bass", "Pick Bass", "Fretless Bass", "Slap Bass 1", "Slap Bass 2", "Synth Bass 1", "Synth Bass 2",
+    "Violin", "Viola", "Cello", "Contrabass", "Tremolo Str.", "Pizzicato Str.", "Harp", "Timpani",
+    "Strings 1", "Strings 2", "Synth Str. 1", "Synth Str. 2", "Choir Aahs", "Voice Oohs", "Synth Voice", "Orchestra Hit",
+    "Trumpet", "Trombone", "Tuba", "Muted Trumpet", "French Horn", "Brass Section", "Synth Brass 1", "Synth Brass 2",
+    "Soprano Sax", "Alto Sax", "Tenor Sax", "Baritone Sax", "Oboe", "English Horn", "Bassoon", "Clarinet",
+    "Piccolo", "Flute", "Recorder", "Pan Flute", "Blown Bottle", "Shakuhachi", "Whistle", "Ocarina",
+    "Square Lead", "Sawtooth Lead", "Calliope Lead", "Chiff Lead", "Charang Lead", "Voice Lead", "Fifths Lead", "Bass+Lead",
+    "New Age Pad", "Warm Pad", "Polysynth Pad", "Choir Pad", "Bowed Pad", "Metallic Pad", "Halo Pad", "Sweep Pad",
+    "Rain FX", "Soundtrack FX", "Crystal FX", "Atmosphere FX", "Brightness FX", "Goblins FX", "Echoes FX", "Sci-Fi FX",
+    "Sitar", "Banjo", "Shamisen", "Koto", "Kalimba", "Bagpipe", "Fiddle", "Shanai",
+    "Tinkle Bell", "Agogo", "Steel Drums", "Woodblock", "Taiko Drum", "Melodic Tom", "Synth Drum", "Reverse Cym.",
+    "Gtr Fret Noise", "Breath Noise", "Seashore", "Bird Tweet", "Teleph. Ring", "Helicopter", "Applause", "Gunshot",
+
+    /* 128-168: Alternate Melodic Bank (Fixed Names) */
+    "Grand Piano", "Bright Piano", "E. Grand Piano", "Honky-tonk 2", "Rhodes Piano", "Chorused Piano", "Harpsichord 2", "Clavinet 2",
+    "Celesta 2", "Glockenspiel 2", "Music Box 2", "Vibraphone 2", "Marimba 2", "Xylophone 2", "Tubular Bell 2", "Dulcimer 2",
+    "Hammond Organ", "Perc. Organ 2", "Rock Organ 2", "Church Organ 2", "Reed Organ 2", "Accordion 2", "Harmonica 2", "Tango Accord 2",
+    "Nylon Gtr 2", "Steel Gtr 2", "Jazz Gtr 2", "Clean Gtr 2", "Muted Gtr 2", "Overdriven Gtr", "Distortion Gtr 2", "Gtr Harmonics 2",
+    "Acoustic Bass 2", "Finger Bass 2", "Pick Bass 2", "Fretless Bass 2", "Slap Bass 1b", "Slap Bass 2b", "Synth Bass 1b", "Synth Bass 2b",
+    "Violin 2",
+
+    /* 169-210: Percussion Bank 1 */
+    "Ac. Bass Drum", "Ac. Bass Drum 2", "Slide Stick", "Ac. Snare", "Hand Clap", "Electric Snare", "Low Floor Tom", "Closed Hi-Hat",
+    "High Floor Tom", "Pedal Hi-Hat", "Low Tom", "Open Hi-Hat", "Low-Mid Tom", "Hi-Mid Tom", "Crash Cymbal 1", "High Tom",
+    "Ride Cymbal 1", "Chinese Cymbal", "Ride Bell", "Splash Cymbal", "Cowbell", "Crash Cymbal 2", "Vibraslap", "Ride Cymbal 2",
+    "High Bongo", "Low Bongo", "Mute Hi Conga", "Open Hi Conga", "Low Conga", "High Timbale", "Low Timbale", "High Agogo",
+    "Low Agogo", "Cabasa", "Maracas", "Claves", "Hi Wood Block", "Low Wood Block", "Mute Cuica", "Mute Triangle", "Open Triangle", "Tambourine",
+
+    /* 211-252: Percussion Bank 2 (Extended/Repeats) */
+    "Ac. Bass Drum 3", "Side Stick 2", "Ac. Snare 2", "Hand Clap 2", "Elec. Snare 2", "Low Floor Tom 2", "Closed Hi-Hat 2", "High Floor Tom 2",
+    "Pedal Hi-Hat 2", "Low Tom 2", "Open Hi-Hat 2", "Low-Mid Tom 2", "Hi-Mid Tom 2", "Crash Cymbal 1b", "High Tom 2", "Ride Cymbal 1b",
+    "Chinese Cym. 2", "Ride Bell 2", "Splash Cym. 2", "Cowbell 2", "Crash Cym. 2b", "Vibraslap 2", "Ride Cym. 2b", "High Bongo 2",
+    "Low Bongo 2", "Mute Hi Conga 2", "Open Hi Conga 2", "Low Conga 2", "High Timbale 2", "Low Timbale 2", "High Agogo 2", "Low Agogo 2",
+    "Cabasa 2", "Maracas 2", "Claves 2", "Hi Wood Block 2", "Low Wood Block 2", "Mute Cuica 2", "Mute Triangle 2", "Open Triangle 2", "Log Drum", "Castanets",
+
+    /* 253-255: Custom Kit */
+    "Bass Drum", "Snare", "Hat"
+};
+
 const OPL_Patch drum_bd    = { .m_ave=0x00, .m_ksl=0x0D, .m_atdec=0xE8, .m_susrel=0xEF, .m_wave=0x00, .c_ave=0x00, .c_ksl=0x00, .c_atdec=0xA5, .c_susrel=0xFF, .c_wave=0x00, .feedback=0x06 };
 const OPL_Patch drum_snare = { .m_ave=0x06, .m_ksl=0x00, .m_atdec=0xF0, .m_susrel=0xF0, .m_wave=0x00, .c_ave=0x00, .c_ksl=0x00, .c_atdec=0xF7, .c_susrel=0xF7, .c_wave=0x00, .feedback=0x0E };
 const OPL_Patch drum_hihat = { .m_ave=0x05, .m_ksl=0x00, .m_atdec=0xF0, .m_susrel=0x77, .m_wave=0x00, .c_ave=0x00, .c_ksl=0x00, .c_atdec=0xFA, .c_susrel=0xEA, .c_wave=0x00, .feedback=0x0E };

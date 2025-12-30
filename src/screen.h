@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 extern char message[];
+extern uint8_t ch_peaks[9]; // Peak meter state
 
 // XRAM Pattern Base (from our map)
 #define PATTERN_XRAM_BASE 0x0000
@@ -35,5 +36,6 @@ extern void read_cell(uint8_t pat, uint8_t row, uint8_t chan, PatternCell *cell)
 extern void draw_string(uint8_t x, uint8_t y, const char* s, uint8_t fg, uint8_t bg);
 extern void draw_hex_byte(uint16_t vga_addr, uint8_t val);
 extern void set_text_color(uint8_t x, uint8_t y, uint8_t len, uint8_t fg, uint8_t bg);
+extern void update_meters(void);
 
 #endif // SCREEN_H

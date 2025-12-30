@@ -70,9 +70,11 @@ void player_tick(void) {
         if (target_note != active_midi_note) {
             // Live Overdrive: Cut the sequencer's note and play the keyboard note
             OPL_NoteOff(channel); 
+            // ch_peaks[channel] = 0; // Clear peak
             OPL_SetPatch(channel, &gm_bank[current_instrument]);
             OPL_SetVolume(channel, current_volume << 1); 
             OPL_NoteOn(channel, target_note);
+            ch_peaks[channel] = current_volume; // Set peak for meter display
             active_midi_note = target_note;
 
             if (edit_mode) {
@@ -98,6 +100,7 @@ void player_tick(void) {
     else {
         if (active_midi_note != 0) {
             OPL_NoteOff(channel);
+            // ch_peaks[channel] = 0; // Clear peak
             active_midi_note = 0;
         }
     }
@@ -249,10 +252,12 @@ void sequencer_step(void) {
             
             if (cell.note != 0) {
                 OPL_NoteOff(ch); 
+                // ch_peaks[ch] = 0; // Clear peak
                 if (cell.note != 255) {
                     OPL_SetPatch(ch, &gm_bank[cell.inst]);
                     OPL_SetVolume(ch, cell.vol << 1); 
                     OPL_NoteOn(ch, cell.note);
+                    ch_peaks[ch] = cell.vol; // Set peak for meter display
                 }
             }
         }
@@ -273,7 +278,10 @@ void handle_transport_controls() {
         seq.is_playing = false;
         
         // Silence all channels
-        for (uint8_t i = 0; i < 9; i++) OPL_NoteOff(i);
+        for (uint8_t i = 0; i < 9; i++) {
+            OPL_NoteOff(i);
+            // ch_peaks[i] = 0; // Clear peak
+        }
         
         // Reset to beginning
         uint8_t old = cur_row;
@@ -301,11 +309,12 @@ void handle_editing(void) {
         render_row(cur_row);
         
         // 4. (Standard Tracker Behavior) Auto-advance to the next row
-        if (cur_row < 31) {
-            uint8_t old_row = cur_row;
-            cur_row++;
-            update_cursor_visuals(old_row, cur_row, cur_channel, cur_channel);
-        }
+        // if (cur_row < 31) {
+        //     uint8_t old_row = cur_row;
+        //     cur_row--;
+        //     update_cursor_visuals(old_row, cur_row, cur_channel, cur_channel);
+        // }
+        update_cursor_visuals(cur_row, cur_row, cur_channel, cur_channel);
         
         printf("Cell Cleared at Row %d\n", cur_row - 1);
     }
@@ -399,9 +408,11 @@ void modify_note(int8_t delta) {
         
         // 3. Live Preview: Play the "nudged" note
         OPL_NoteOff(cur_channel);
+        // ch_peaks[cur_channel] = 0; // Clear peak
         OPL_SetPatch(cur_channel, &gm_bank[cell.inst]);
         OPL_SetVolume(cur_channel, cell.vol << 1);
         OPL_NoteOn(cur_channel, cell.note);
+        ch_peaks[cur_channel] = cell.vol; // Set peak
     }
 }
 

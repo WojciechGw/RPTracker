@@ -122,6 +122,9 @@ int main(void)
         sequencer_step();
 
         player_tick();
+
+        // Always animate the meters every frame
+        update_meters();
         
         // --- UI REFRESH: Row or Channel Movement
         if (cur_row != prev_row || cur_channel != prev_chan) {

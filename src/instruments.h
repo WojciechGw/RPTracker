@@ -10,6 +10,7 @@ typedef struct {
 } OPL_Patch;
 
 extern const OPL_Patch gm_bank[];
+extern const char* const patch_names[];
 extern const OPL_Patch drum_bd;
 extern const OPL_Patch drum_snare;
 extern const OPL_Patch drum_hihat;

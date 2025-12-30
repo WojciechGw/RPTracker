@@ -1,0 +1,130 @@
+            1         2         3         4         5         6         7         8
+   12345678901234567890123456789012345678901234567890123456789012345678901234567890
+1  Instrument: 00  Octave: 03    MODE: PLAYINGVOL: 37   SEQ: STOPPED
+2  Pattern: 00                   MODE: PATTERN
+3  Seq: 00 .. .. .. .. .. .. .. .. ..    LEN: 01
+4  [ MODULATOR ]          [ CARRIER ]
+5  
+6  MULT/VIB: 01           MULT/VIB: 01
+7  KSL/LEV:  4B           KSL/LEV:  00
+8  ATK/DEC:  F1           ATK/DEC:  D2
+9  SUS/REL:  50           SUS/REL:  76
+10 
+11 FEEDBACK/CONN: 06   (FM SYNTH)
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27 RN |  CH 0 |  CH 1 |  CH 2 |  CH 3 |  CH 4 |  CH 5 |  CH 6 |  CH 7 |  CH 8 |
+
+
+            1         2         3         4         5         6         7         8
+   12345678901234567890123456789012345678901234567890123456789012345678901234567890
+0  RPTRACKER v0.1  [ FILE: UNTITLED.RPT ]                     BPM: 125  TKS: 06
+1  MODE: [PATTERN]   OCT: 03   INS: 00 (Acoustic Piano    )   VOL: 3F   REC: OFF
+2  SEQ : 00 [00] 01 02 .. .. .. .. .. .. .. .. .. .. .. ..   LEN: 01   SEQ: STOPPED
+3  --------------------------------------------------------------------------------
+4  [ MODULATOR / OP1 ]        [ CARRIER / OP2 ]         [ CHANNEL METERS ]
+5  
+6  MULT/VIB: 01               MULT/VIB: 01               CH0 [##########]
+7  KSL/LEV:  4B               KSL/LEV:  00               CH1 [#####     ]
+8  ATK/DEC:  F1               ATK/DEC:  D2               CH2 [          ]
+9  SUS/REL:  50               SUS/REL:  76               CH3 [#######   ]
+10 WAVE:     00               WAVE:     00               CH4 [###       ]
+11 FEEDBACK: 06 (FM SYNTH)                               CH5 [##        ]
+12                                                       CH6 [          ]
+13 [ EXTRA INFO / HELP ]                                 CH7 [          ]
+14 F8:MODE F9/10:PAT F11/12:SEQ                          CH8 [##########]
+...
+27 RN |  CH 0 |  CH 1 |  CH 2 |  CH 3 |  CH 4 |  CH 5 |  CH 6 |  CH 7 |  CH 8 |
+
+
+
+1         2         3         4         5         6         7         8
+   12345678901234567890123456789012345678901234567890123456789012345678901234567890
+0  RP6502 TRACKER v0.1  [ FILE: UNTITLED.RPT ]                SEQ: STOPPED        
+1  INS: 05 (E. Piano 2         )  OCT:04  VOL:3F  ROFF
+2  PAT: 00 MOD: PATTERN      SEQ:            LEN:
+3  SEQ: 00 .. .. .. .. .. .. .. .. ..      LEN: 01
+4  [ MODULATOR / OP1 ]         [ CARRIER / OP2 ]          [ METERS ]
+5
+6  MULT/VIB: 01                MULT/VIB: 01               CH0 [##########]
+7  KSL/LEV:  4B                KSL/LEV:  00               CH1 [#####     ]
+8  ATK/DEC:  F1                ATK/DEC:  D2               CH2 [          ]
+9  SUS/REL:  50                SUS/REL:  76               CH3 [#######   ]
+10                                                        CH4 [###       ]
+11 FEEDBACK/CONN: (FM SYNTH)                              CH5 [##        ]
+12                                                        CH6 [          ]
+13                                                        CH7 [          ]
+14                                                        CH8 [##########]
+15
+...
+27 RN |  CH 0 |  CH 1 |  CH 2 |  CH 3 |  CH 4 |  CH 5 |  CH 6 |  CH 7 |  CH 8 |
+
+            1         2         3         4         5         6         7         8
+   12345678901234567890123456789012345678901234567890123456789012345678901234567890
+   MODE: [       ]  OCT:    INS:    (                  )  VOL: XX REC: 
+
+0  --------------------------------------------------------------------------------
+1  RP6502 TRACKER v0.1  [ FILE: UNTITLED.RPT ] 
+2  --------------------------------------------------------------------------------
+3  MODE: [PATTERN]   OCT: 03   INS: 00 (Acoustic Piano    )   VOL: 3F  REC: OFF
+4  SEQ : 00 [00] 01 02 .. .. .. .. .. .. .. .. .. .. .. ..    LEN: 01  SEQ: STOPPED
+5  --------------------------------------------------------------------------------
+6  [ MODULATOR / OP1 ]        [ CARRIER / OP2 ]         [ CHANNEL METERS ]
+7  
+8    MULT/VIB: 01               MULT/VIB: 01             CH0 [##########]
+9    KSL/LEV:  4B               KSL/LEV:  00             CH1 [#####     ]
+10   ATK/DEC:  F1               ATK/DEC:  D2             CH2 [          ]
+11   SUS/REL:  50               SUS/REL:  76             CH3 [#######   ]
+12   WAVE:     00               WAVE:     00             CH4 [###       ]
+13   FEEDBACK: 06 (FM SYNTH)                             CH5 [##        ]
+14                                                       CH6 [          ]
+15 [ EXTRA INFO / HELP ]                                 CH7 [          ]
+16 F8:MODE F9/10:PAT F11/12:SEQ                          CH8 [##########]
+...
+27 RN |  CH 0 |  CH 1 |  CH 2 |  CH 3 |  CH 4 |  CH 5 |  CH 6 |  CH 7 |  CH 8 |
+
+
+
+
+            1         2         3         4         5         6         7         8
+   12345678901234567890123456789012345678901234567890123456789012345678901234567890
+0  --------------------------------------------------------------------------------
+1  RP6502 TRACKER v0.1                 FILE: UNTITLED.RPT
+2  --------------------------------------------------------------------------------
+3  MODE: PATTERN   OCT:03   INS:00 (Acoustic Piano)   REC: OFF
+4  SEQ: 00 [00] 01 02 .. .. .. .. .. .. LEN:01   STATUS: STOPPED
+5  PLAY: 00:00:00   BPM:120   PAT: 01
+6  --------------------------------------------------------------------------------
+7  [ACTIVE INSTRUMENT - OPL2 2-OP FM]
+8  MULT/VIB  MOD:01   CAR:01     FEEDBACK: 06
+9  KSL/LEV   MOD:4B   CAR:00
+10 ATK/DEC   MOD:F1   CAR:D2
+11 SUS/REL   MOD:50   CAR:76
+12 WAVEFORM  MOD:00   CAR:00          (SINE / FM SYNTH)
+13 --------------------------------------------------------------------------------
+14 [CHANNEL ACTIVITY METERS]
+15 CH0  [██████████]                          
+16 CH1  [██████    ]                          
+17 CH2  [          ]                          
+18 CH3  [████████  ]                          
+19 CH4  [████      ]                          
+20 CH5  [███       ]                          
+21 CH6  [          ]                          
+22 CH7  [          ]                          
+23 CH8  [██████████]                          
+24 --------------------------------------------------------------------------------
+25 F1/F2: OCTAVE ±   F3/F4: INSTRUMENT ±   F5: COPY INST   F6: PLAY/PAUSE  F7: STOP  
+26 F8: MODE         F9/F10: PATTERN ±  F11/12: SEQUENCE   

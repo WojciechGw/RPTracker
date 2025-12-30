@@ -28,31 +28,40 @@ uint8_t read_order_xram(uint8_t index) {
 }
 
 void update_order_display() {
-    // Draw the Song Order List (Playlist)
-    // Format: SEQ: 00 00 [01] 02 00 ...
-    draw_string(2, 3, "SEQ:", HUD_COL_CYAN, HUD_COL_BG);
-    
-    // We'll show a window of 10 slots
+    const uint8_t start_x = 23; // Sequence IDs start at column 21
+    const uint8_t row_y = 4;    // Sequence line is row 4
+
+    // Show 10 slots of the playlist
     for (uint8_t i = 0; i < 10; i++) {
-        uint16_t vga_ptr = text_message_addr + (3 * 80 + 7 + i * 3) * 3;
+        uint8_t x = start_x + (i * 3); // Each slot is 2 chars + 1 space
+        uint16_t vga_ptr = text_message_addr + (row_y * 80 + x) * 3;
         
-        // If we are past the song length, draw dots
         if (i >= song_length) {
-            draw_string(7 + i * 3, 3, ".. ", HUD_COL_DARKGREY, HUD_COL_BG);
+            // Draw empty slot dots at the correct X coordinate
+            draw_string(x, row_y, ".. ", HUD_COL_DARKGREY, HUD_COL_BG);
         } else {
             uint8_t p_id = read_order_xram(i);
             
-            // Highlight the current playing/editing slot in Yellow
-            uint8_t color = (i == cur_order_idx) ? HUD_COL_YELLOW : HUD_COL_WHITE;
-            uint8_t bg = (i == cur_order_idx) ? HUD_COL_HIGHLIGHT : HUD_COL_BG;
+            // Highlight logic: 
+            // Current editing slot gets Yellow text on Blue/Red background
+            uint8_t fg = (i == cur_order_idx) ? HUD_COL_YELLOW : HUD_COL_WHITE;
             
+            // Determine background color based on mode
+            uint8_t bg;
+            if (i == cur_order_idx) {
+                bg = edit_mode ? HUD_COL_EDIT_CELL : HUD_COL_PLAY_CELL;
+            } else {
+                bg = HUD_COL_BG;
+            }
+            
+            // 1. Draw the actual Hex ID
             draw_hex_byte(vga_ptr, p_id);
-            // Manually set the color for the hex byte since draw_hex_byte uses defaults
-            set_text_color(7 + i * 3, 3, 2, color, bg);
+            
+            // 2. Force the colors (including the background highlight)
+            set_text_color(x, row_y, 2, fg, bg);
+            
+            // 3. Draw a separator space after the hex ID
+            draw_string(x + 2, row_y, " ", HUD_COL_WHITE, HUD_COL_BG);
         }
     }
-    
-    // Show total length
-    draw_string(40, 3, "LEN:", HUD_COL_CYAN, HUD_COL_BG);
-    draw_hex_byte(text_message_addr + (3 * 80 + 45) * 3, (uint8_t)song_length);
 }
