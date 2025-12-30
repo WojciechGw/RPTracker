@@ -5,7 +5,7 @@
 #define MAX_ORDERS 256
 
 extern uint8_t cur_order_idx;
-extern uint8_t song_length;
+extern uint16_t song_length;
 
 extern void update_order_display();
 extern uint8_t read_order_xram(uint8_t index);

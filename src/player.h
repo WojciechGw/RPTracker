@@ -5,6 +5,8 @@
 #include <stdbool.h>
 
 #define is_shift_down() (key(KEY_LEFTSHIFT) || key(KEY_RIGHTSHIFT))
+#define is_ctrl_down()  (key(KEY_LEFTCTRL)  || key(KEY_RIGHTCTRL))
+#define is_alt_down()   (key(KEY_LEFTALT)   || key(KEY_RIGHTALT))
 
 typedef struct {
     bool is_playing;
@@ -36,5 +38,6 @@ extern void modify_volume(int8_t delta);
 extern void modify_instrument(int8_t delta);
 extern void modify_note(int8_t delta);
 extern void change_pattern(int8_t delta);
+extern void handle_song_order_input(void);
 
 #endif

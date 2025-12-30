@@ -128,8 +128,11 @@ void player_tick(void) {
     if (key_pressed(KEY_MINUS)) modify_note(-1);
     if (key_pressed(KEY_EQUAL)) modify_note(1);
 
-    if (key_pressed(KEY_F11)) change_pattern(-1);
-    if (key_pressed(KEY_F12)) change_pattern(1);
+    // Pattern Change: F9 and F10
+    if (key_pressed(KEY_F9)) change_pattern(-1);
+    if (key_pressed(KEY_F10)) change_pattern(1);
+
+    handle_song_order_input();
 
 }
 
@@ -207,16 +210,20 @@ void sequencer_step(void) {
         if (cur_row < 31) {
             cur_row++;
         } else {
-            // END OF PATTERN REACHED
+            // END OF PATTERN: Move to next step in the playlist
             cur_row = 0;
-            
-            // Move to the next pattern in the Order List
             cur_order_idx++;
-            if (cur_order_idx >= song_length) cur_order_idx = 0; // Loop song
-            
+
+            // Loop the song if we hit the end of the defined length
+            if (cur_order_idx >= song_length) {
+                cur_order_idx = 0;
+            }
+
+            // Get the pattern ID for this new step
             cur_pattern = read_order_xram(cur_order_idx);
             
-            render_grid(); // Refresh the screen for the new pattern
+            // Refresh the whole grid for the new pattern
+            render_grid();
             update_dashboard();
         }
 
@@ -404,5 +411,52 @@ void change_pattern(int8_t delta) {
         update_cursor_visuals(cur_row, cur_row, cur_channel, cur_channel);
         
         printf("Switched to Pattern: %02X\n", cur_pattern);
+    }
+}
+
+void handle_song_order_input() {
+    // 1. Shift + F11/F12: Change Pattern ID in CURRENT Order Slot
+    if (is_shift_down()) {
+        uint8_t p = read_order_xram(cur_order_idx);
+        if (key_pressed(KEY_F11)) {
+            if (p > 0) write_order_xram(cur_order_idx, p - 1);
+            else write_order_xram(cur_order_idx, MAX_PATTERNS - 1); // Wrap
+            update_dashboard();
+        }
+        if (key_pressed(KEY_F12)) {
+            if (p < MAX_PATTERNS - 1) write_order_xram(cur_order_idx, p + 1);
+            else write_order_xram(cur_order_idx, 0); // Wrap
+            update_dashboard();
+        }
+    }
+    // 2. Alt + F11/F12: Change total SONG LENGTH
+    else if (is_alt_down()) {
+        if (key_pressed(KEY_F11)) {
+            if (song_length > 1) song_length--;
+            update_dashboard();
+        }
+        if (key_pressed(KEY_F12)) {
+            if (song_length < MAX_ORDERS) song_length++; // Warning fixed by uint16_t
+            update_dashboard();
+        }
+    }
+    // 3. Just F11/F12: Navigate the Order List (Jump through the song)
+    else {
+        if (key_pressed(KEY_F11)) {
+            if (cur_order_idx > 0) cur_order_idx--;
+            else cur_order_idx = song_length - 1; // Wrap
+            
+            cur_pattern = read_order_xram(cur_order_idx);
+            render_grid();
+            update_dashboard();
+        }
+        if (key_pressed(KEY_F12)) {
+            if (cur_order_idx < song_length - 1) cur_order_idx++;
+            else cur_order_idx = 0; // Wrap
+            
+            cur_pattern = read_order_xram(cur_order_idx);
+            render_grid();
+            update_dashboard();
+        }
     }
 }
