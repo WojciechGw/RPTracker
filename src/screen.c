@@ -11,7 +11,7 @@ char message[MESSAGE_LENGTH + 1]; // Text message buffer (+1 for null terminator
 
 // Tracker Cursor
 uint8_t cur_pattern = 0;
-uint8_t cur_row = 0;        // 0-63
+uint8_t cur_row = 0;        // 0-31
 uint8_t cur_channel = 0;    // 0-8
 bool edit_mode = false;     // Are we recording?
 
@@ -53,7 +53,7 @@ void set_text_color(uint8_t x, uint8_t y, uint8_t len, uint8_t fg, uint8_t bg) {
 }
 
 void draw_note(uint16_t vga_addr, uint8_t midi_note) {
-    const char* const names[] = {"C-","C#","D-","D#","E-","F-","F#","G-","G#","A-","A#","B-"};
+    // const char* const names[] = {"C-","C#","D-","D#","E-","F-","F#","G-","G#","A-","A#","B-"};
     RIA.addr0 = vga_addr;
     RIA.step0 = 3;
     
@@ -66,8 +66,8 @@ void draw_note(uint16_t vga_addr, uint8_t midi_note) {
     } else {
         uint8_t note = midi_note % 12;
         uint8_t octave = (midi_note / 12) - 1;
-        RIA.rw0 = names[note][0];
-        RIA.rw0 = names[note][1];
+        RIA.rw0 = note_names[note][0];
+        RIA.rw0 = note_names[note][1];
         RIA.rw0 = '0' + octave;
     }
 }
@@ -121,11 +121,11 @@ void render_row(uint8_t row_idx) {
             for(int i=0; i<2; i++) { RIA.rw0 = '.'; RIA.rw0 = HUD_COL_SAGEGREEN; RIA.rw0 = bg; }
 
         } else {
-            const char* names[] = {"C-","C#","D-","D#","E-","F-","F#","G-","G#","A-","A#","B-"};
+            // const char* names[] = {"C-","C#","D-","D#","E-","F-","F#","G-","G#","A-","A#","B-"};
             uint8_t n = cell->note % 12;
             uint8_t oct = (cell->note / 12) - 1;
-            RIA.rw0 = names[n][0]; RIA.rw0 = HUD_COL_WHITE; RIA.rw0 = bg;
-            RIA.rw0 = names[n][1]; RIA.rw0 = HUD_COL_WHITE; RIA.rw0 = bg;
+            RIA.rw0 = note_names[n][0]; RIA.rw0 = HUD_COL_WHITE; RIA.rw0 = bg;
+            RIA.rw0 = note_names[n][1]; RIA.rw0 = HUD_COL_WHITE; RIA.rw0 = bg;
             RIA.rw0 = '0' + oct;   RIA.rw0 = HUD_COL_WHITE; RIA.rw0 = bg;
 
             // Instrument (2 chars: Magenta)
@@ -234,6 +234,8 @@ void draw_string(uint8_t x, uint8_t y, const char* s, uint8_t fg, uint8_t bg) {
 
 void draw_headers() {
     // Indices: 0123 45678901 23456789...
+    //          0        1         2         3         4         5         6         7         8
+    // Line Num 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
     // Header:  RN |  CH 0 |  CH 1 |  CH 2 |  CH 3 |  CH 4 |  CH 5 |  CH 6 |  CH 7 |  CH 8 |
     draw_string(0, 27, "RN |  CH 0 |  CH 1 |  CH 2 |  CH 3 |  CH 4 |  CH 5 |  CH 6 |  CH 7 |  CH 8 |", 
                 HUD_COL_CYAN, HUD_COL_BG);
@@ -324,5 +326,9 @@ void update_dashboard(void) {
     // 5. Current Volume (Row 1, far right)
     draw_string(45, 1, "VOL:", HUD_COL_CYAN, HUD_COL_BG);
     draw_hex_byte(text_message_addr + (1 * 80 + 50) * 3, current_volume);
+
+    // 6. Current Pattern (Row 2)
+    draw_string(2, 2, "PATTERN:", HUD_COL_CYAN, HUD_COL_BG);
+    draw_hex_byte(text_message_addr + (2 * 80 + 11) * 3, cur_pattern);
 
 }

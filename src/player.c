@@ -105,17 +105,6 @@ void player_tick(void) {
     if (key_pressed(KEY_F1)) { if (current_octave > 0) current_octave--; update_dashboard(); }
     if (key_pressed(KEY_F2)) { if (current_octave < 8) current_octave++; update_dashboard(); }
 
-    // if (key_pressed(KEY_F3)) { 
-    //     current_instrument--;
-    //     OPL_SetPatch(cur_channel, &gm_bank[current_instrument]);
-    //     update_dashboard();
-    // }
-    // if (key_pressed(KEY_F4)) { 
-    //     current_instrument++; // int8 wraps naturally
-    //     OPL_SetPatch(cur_channel, &gm_bank[current_instrument]);
-    //     update_dashboard();
-    // }
-
     if (key_pressed(KEY_F5)) { // Use F5 to "Pick" the instrument under the cursor
         PatternCell cell;
         read_cell(cur_pattern, cur_row, cur_channel, &cell);
@@ -125,17 +114,6 @@ void player_tick(void) {
             update_dashboard();
         }
     }
-
-    // // Volume Down ([)
-    // if (key_pressed(KEY_LEFTBRACE)) {
-    //     if (current_volume > 0) current_volume--;
-    //     update_dashboard();
-    // }
-    // // Volume Up (])
-    // if (key_pressed(KEY_RIGHTBRACE)) {
-    //     if (current_volume < 63) current_volume++;
-    //     update_dashboard();
-    // }
 
     // Volume: [ and ] (with Shift detection inside modify_volume)
     if (key_pressed(KEY_LEFTBRACE))  modify_volume(-1);
@@ -148,6 +126,9 @@ void player_tick(void) {
     // Note Adjustment: - and =
     if (key_pressed(KEY_MINUS)) modify_note(-1);
     if (key_pressed(KEY_EQUAL)) modify_note(1);
+
+    if (key_pressed(KEY_F11)) change_pattern(-1);
+    if (key_pressed(KEY_F12)) change_pattern(1);
 
 }
 
@@ -385,5 +366,27 @@ void modify_note(int8_t delta) {
         OPL_SetPatch(cur_channel, &gm_bank[cell.inst]);
         OPL_SetVolume(cur_channel, cell.vol << 1);
         OPL_NoteOn(cur_channel, cell.note);
+    }
+}
+
+void change_pattern(int8_t delta) {
+    uint8_t old_pat = cur_pattern;
+
+    // 1. Calculate new pattern with wrapping (0-15)
+    int16_t new_pat = (int16_t)cur_pattern + delta;
+    if (new_pat < 0) new_pat = MAX_PATTERNS - 1;
+    if (new_pat >= MAX_PATTERNS) new_pat = 0;
+    
+    cur_pattern = (uint8_t)new_pat;
+
+    // 2. If the pattern actually changed, refresh the whole screen
+    if (cur_pattern != old_pat) {
+        render_grid(); // Redraw all 32 rows for the new pattern
+        update_dashboard(); // Update the "PAT: XX" display
+        
+        // Ensure the cursor highlight is still drawn on the current row
+        update_cursor_visuals(cur_row, cur_row, cur_channel, cur_channel);
+        
+        printf("Switched to Pattern: %02X\n", cur_pattern);
     }
 }

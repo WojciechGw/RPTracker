@@ -35,5 +35,6 @@ extern void handle_editing(void);
 extern void modify_volume(int8_t delta);
 extern void modify_instrument(int8_t delta);
 extern void modify_note(int8_t delta);
+extern void change_pattern(int8_t delta);
 
 #endif
