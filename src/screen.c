@@ -268,6 +268,39 @@ void clear_top_ui() {
     }
 }
 
+void update_cpu_speed_display(void) {
+    // 1. Get the real measured speed in kHz
+    int khz = phi2();
+
+    // 2. Extract digits
+    // Example: 8125 kHz
+    uint8_t mhz_tens   = (khz / 10000) % 10; // Usually 0
+    uint8_t mhz_ones   = (khz / 1000) % 10;  // 8
+    uint8_t mhz_tenths = (khz % 1000) / 100; // 1 (The .X part)
+
+    // 3. Point to the "CPU: " value position on Row 19
+    // Column 60 is where the number starts
+    uint16_t vga_ptr = text_message_addr + (21 * 80 + 70) * 3;
+    RIA.addr0 = vga_ptr;
+    RIA.step0 = 3; // We skip color bytes to keep whatever colors draw_ui_dashboard set
+
+    // 4. Write characters
+    // Tens digit (only show if > 0, otherwise space)
+    if (mhz_tens > 0) {
+        RIA.rw0 = '0' + mhz_tens;
+    } else {
+        RIA.rw0 = ' '; 
+    }
+
+    RIA.rw0 = '0' + mhz_ones;   // Whole MHz
+    RIA.rw0 = '.';              // Decimal
+    RIA.rw0 = '0' + mhz_tenths; // Tenths
+    RIA.rw0 = ' ';              // Space
+    RIA.rw0 = 'M';
+    RIA.rw0 = 'H';
+    RIA.rw0 = 'z';
+}
+
 void draw_ui_dashboard(void) {
     const char* h_line = "+------------------------------------------------------------------------------+";
     const char* h_short = "+-------------------------+-------------------------+";
@@ -377,7 +410,8 @@ void draw_ui_dashboard(void) {
     }
     
     draw_string(65, 20, "[ SYSTEM ]", HUD_COL_YELLOW, HUD_COL_BG);
-    draw_string(66, 21, "CPU: 8.0 MHz", HUD_COL_WHITE, HUD_COL_BG);
+    draw_string(66, 21, "CPU: ", HUD_COL_WHITE, HUD_COL_BG);
+    update_cpu_speed_display();
     #ifdef USE_NATIVE_OPL2
         draw_string(66, 22, "OPL: NATIVE", HUD_COL_WHITE, HUD_COL_BG);
     #else
@@ -436,7 +470,7 @@ void update_dashboard(void) {
     
     // Connection type display (Bit 0 of Feedback register)
     bool additive = (p->feedback & 0x01);
-    draw_string(18, 14, additive ? "(ADD)" : "(FM) ", 
+    draw_string(18, 18, additive ? "(ADD)" : "(FM) ", 
                 HUD_COL_DPURPLE, HUD_COL_BG);
 }
 
