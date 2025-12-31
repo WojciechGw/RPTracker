@@ -41,25 +41,29 @@ uint8_t read_order_xram(uint8_t index) {
 }
 
 void update_order_display() {
-    const uint8_t start_x = 23; // Sequence IDs start at column 21
-    const uint8_t row_y = 4;    // Sequence line is row 4
-
-    // Show 10 slots of the playlist
-    for (uint8_t i = 0; i < 10; i++) {
-        uint8_t x = start_x + (i * 3); // Each slot is 2 chars + 1 space
-        uint16_t vga_ptr = text_message_addr + (row_y * 80 + x) * 3;
+    const uint8_t start_x = 21; // Sequence start column
+    const uint8_t start_y = 3;  // Sequence start row (using rows 3, 4, 5, 6)
+    
+    // Total 64 slots (4 rows of 16)
+    for (uint8_t i = 0; i < 64; i++) {
+        // --- THE MATH FIX ---
+        // row = i / 16 (0, 1, 2, 3)
+        // col = i % 16 (0, 1, 2 ... 15)
+        uint8_t row = i / 16; 
+        uint8_t col = i % 16;
         
+        uint8_t x = start_x + (col * 3); // 3 chars per slot (e.g. "00 ")
+        uint8_t y = start_y + row;
+        uint16_t vga_ptr = text_message_addr + (y * 80 + x) * 3;
+
         if (i >= song_length) {
-            // Draw empty slot dots at the correct X coordinate
-            draw_string(x, row_y, ".. ", HUD_COL_DARKGREY, HUD_COL_BG);
+            // Unused slots show as grey dots
+            draw_string(x, y, ".. ", HUD_COL_DARKGREY, HUD_COL_BG);
         } else {
             uint8_t p_id = read_order_xram(i);
             
-            // Highlight logic: 
-            // Current editing slot gets Yellow text on Blue/Red background
+            // Current editing slot gets Yellow highlight
             uint8_t fg = (i == cur_order_idx) ? HUD_COL_YELLOW : HUD_COL_WHITE;
-            
-            // Determine background color based on mode
             uint8_t bg;
             if (i == cur_order_idx) {
                 bg = edit_mode ? HUD_COL_EDIT_CELL : HUD_COL_PLAY_CELL;
@@ -67,14 +71,11 @@ void update_order_display() {
                 bg = HUD_COL_BG;
             }
             
-            // 1. Draw the actual Hex ID
-            draw_hex_byte(vga_ptr, p_id);
+            // 1. Draw the Pattern ID (2-digit hex)
+            draw_hex_byte_coloured(vga_ptr, p_id, fg, bg);
             
-            // 2. Force the colors (including the background highlight)
-            set_text_color(x, row_y, 2, fg, bg);
-            
-            // 3. Draw a separator space after the hex ID
-            draw_string(x + 2, row_y, " ", HUD_COL_WHITE, HUD_COL_BG);
+            // 2. Draw the trailing space (Clear background for non-active slots)
+            draw_string(x + 2, y, " ", HUD_COL_WHITE, HUD_COL_BG);
         }
     }
 }

@@ -2,7 +2,7 @@
 #define SONG_H
 
 #define ORDER_LIST_XRAM 0xB000
-#define MAX_ORDERS 256
+#define MAX_ORDERS 64
 
 extern uint8_t cur_order_idx;
 extern uint16_t song_length;

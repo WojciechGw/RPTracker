@@ -83,6 +83,21 @@ void draw_hex_byte(uint16_t vga_addr, uint8_t val) {
     RIA.rw0 = hex_chars[val & 0x0F];
 }
 
+void draw_hex_byte_coloured(uint16_t vga_addr, uint8_t val, uint8_t fg, uint8_t bg) {
+    RIA.addr0 = vga_addr;
+    RIA.step0 = 1; // Write every byte (Char, FG, BG)
+    
+    // First Digit
+    RIA.rw0 = hex_chars[val >> 4]; // Character
+    RIA.rw0 = fg;                  // Foreground
+    RIA.rw0 = bg;                  // Background
+    
+    // Second Digit
+    RIA.rw0 = hex_chars[val & 0x0F]; // Character
+    RIA.rw0 = fg;                    // Foreground
+    RIA.rw0 = bg;                    // Background
+}
+
 // pattern_row_idx: The row index in the pattern data (0-31)
 void render_row(uint8_t row_idx) {
     PatternCell row_data[9];
@@ -260,16 +275,38 @@ void draw_ui_dashboard(void) {
     // 1. Structural Borders
     draw_string(0, 0, h_line, HUD_COL_DARKGREY, HUD_COL_BG);
     draw_string(0, 2, h_line, HUD_COL_DARKGREY, HUD_COL_BG);
-    draw_string(0, 5, h_line, HUD_COL_DARKGREY, HUD_COL_BG);
+    draw_string(0, 7, h_line, HUD_COL_DARKGREY, HUD_COL_BG);
+    draw_string(0, 10, h_short, HUD_COL_DARKGREY, HUD_COL_BG);
+
+    draw_string(0, 1, "|", HUD_COL_DARKGREY, HUD_COL_BG);
+    draw_string(79, 1, "|", HUD_COL_DARKGREY, HUD_COL_BG);
+
+    for(uint8_t i=3; i<7; i++) {
+        draw_string(0, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
+        draw_string(79, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
+    }
+
+    for(uint8_t i=8; i<11; i++) {
+        draw_string(0, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
+        draw_string(52, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
+        draw_string(79, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
+    }
     
     // Vertical dividers for the Op editor
-    for(uint8_t i=6; i<17; i++) {
+    for(uint8_t i=11; i<19; i++) {
         draw_string(0, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
         draw_string(26, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
         draw_string(52, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
         draw_string(79, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
     }
-    draw_string(0, 17, h_line, HUD_COL_DARKGREY, HUD_COL_BG);
+    draw_string(0, 19, h_line, HUD_COL_DARKGREY, HUD_COL_BG);
+
+    for(uint8_t i=20; i<26; i++) {
+        draw_string(0, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
+        draw_string(63, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
+        draw_string(79, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
+    }
+    draw_string(0, 26, h_line, HUD_COL_DARKGREY, HUD_COL_BG);
 
     // 2. Static Labels (Rows 1-4)
     // draw_string(2, 1, "RP6502 TRACKER v0.1  [ FILE: UNTITLED.RPT ]", HUD_COL_WHITE, HUD_COL_BG);
@@ -281,30 +318,35 @@ void draw_ui_dashboard(void) {
     draw_string(31 + 13, 1, " ]", HUD_COL_WHITE, HUD_COL_BG);
     
     
-    draw_string(55, 1, "BPM: 150  TKS: 00", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(61, 1, "BPM: 150  TKS: 00", HUD_COL_CYAN, HUD_COL_BG);
 
-    draw_string(2, 3, "MODE: [       ]  OCT:    INS:    (                  )  VOL:    REC: ", HUD_COL_CYAN, HUD_COL_BG);
-    draw_string(2, 4, "EDIT PAT:       SEQ:                                   LEN:    SEQ: ", HUD_COL_CYAN, HUD_COL_BG);
+    // draw_string(2, 3, "MODE: [       ]  OCT:    INS:    (                  )  VOL:    REC: ", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(2, 3, "MODE:[       ] SEQ:                                                REC: ", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(2, 4, "EDIT PAT:                                                          SEQ: ", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(2, 5, "                                                                   LEN: ", HUD_COL_CYAN, HUD_COL_BG);
+
+    // Instrument Name
+    draw_string(2, 8, "INS:    (                  )  VOL:     OCT:   ", HUD_COL_CYAN, HUD_COL_BG);
 
     // 3. Operator Headers
-    draw_string(2, 7, "[ MODULATOR / OP1 ]", HUD_COL_YELLOW, HUD_COL_BG);
+    draw_string(2, 11, "[ MODULATOR / OP1 ]", HUD_COL_YELLOW, HUD_COL_BG);
 
-    draw_string(4, 9, "MULT/VIB:", HUD_COL_CYAN, HUD_COL_BG);
-    draw_string(4, 10, "KSL/LEV:", HUD_COL_CYAN, HUD_COL_BG);
-    draw_string(4, 11, "ATT/DEC:", HUD_COL_CYAN, HUD_COL_BG);
-    draw_string(4, 12, "SUS/REL", HUD_COL_CYAN, HUD_COL_BG);
-    draw_string(4, 13, "WAVE:", HUD_COL_CYAN, HUD_COL_BG);
-    draw_string(4, 14, "FEEDBACK:", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(4, 13, "MULT/VIB:", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(4, 14, "KSL/LEV:", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(4, 15, "ATT/DEC:", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(4, 16, "SUS/REL", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(4, 17, "WAVE:", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(4, 18, "FEEDBACK:", HUD_COL_CYAN, HUD_COL_BG);
 
-    draw_string(28, 7, "[ CARRIER / OP2 ]", HUD_COL_YELLOW, HUD_COL_BG);
+    draw_string(28, 11, "[ CARRIER / OP2 ]", HUD_COL_YELLOW, HUD_COL_BG);
 
-    draw_string(30, 9, "MULT/VIB:", HUD_COL_CYAN, HUD_COL_BG);
-    draw_string(30, 10, "KSL/LEV:", HUD_COL_CYAN, HUD_COL_BG);
-    draw_string(30, 11, "ATT/DEC:", HUD_COL_CYAN, HUD_COL_BG);
-    draw_string(30, 12, "SUS/REL", HUD_COL_CYAN, HUD_COL_BG);
-    draw_string(30, 13, "WAVE:", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(30, 13, "MULT/VIB:", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(30, 14, "KSL/LEV:", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(30, 15, "ATT/DEC:", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(30, 16, "SUS/REL", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(30, 17, "WAVE:", HUD_COL_CYAN, HUD_COL_BG);
 
-    draw_string(55, 7, "[ CHANNEL METERS ]", HUD_COL_YELLOW, HUD_COL_BG);
+    draw_string(55, 8, "[ CHANNEL METERS ]", HUD_COL_YELLOW, HUD_COL_BG);
 
     // 4. Cheatsheet & System Info (New Space)
     // draw_string(1, 20, "[ COMMAND CHEATSHEET ]", HUD_COL_YELLOW, HUD_COL_BG);
@@ -335,7 +377,7 @@ void draw_ui_dashboard(void) {
     }
     
     draw_string(65, 20, "[ SYSTEM ]", HUD_COL_YELLOW, HUD_COL_BG);
-    draw_string(66, 21, "CPU: 8.0MHz", HUD_COL_WHITE, HUD_COL_BG);
+    draw_string(66, 21, "CPU: 8.0 MHz", HUD_COL_WHITE, HUD_COL_BG);
     #ifdef USE_NATIVE_OPL2
         draw_string(66, 22, "OPL: NATIVE", HUD_COL_WHITE, HUD_COL_BG);
     #else
@@ -348,49 +390,49 @@ void update_dashboard(void) {
 
     // --- Row 3: Brush Info ---
     // Mode: PATTERN (Green) or SONG (Yellow)
-    draw_string(9, 3, is_song_mode ? "SONG   " : "PATTERN", is_song_mode ? HUD_COL_YELLOW : HUD_COL_GREEN, HUD_COL_BG);
+    draw_string(8, 3, is_song_mode ? "SONG   " : "PATTERN", is_song_mode ? HUD_COL_YELLOW : HUD_COL_GREEN, HUD_COL_BG);
     
     // Octave & Instrument ID
-    draw_hex_byte(text_message_addr + (3 * 80 + 24) * 3, current_octave);
-    draw_hex_byte(text_message_addr + (3 * 80 + 32) * 3, current_instrument);
+    draw_hex_byte_coloured(text_message_addr + (8 * 80 + 46) * 3, current_octave, HUD_COL_WHITE, HUD_COL_BG);
+    draw_hex_byte_coloured(text_message_addr + (8 * 80 + 7) * 3, current_instrument, HUD_COL_WHITE, HUD_COL_BG);
     
     // Instrument Name (Clear 18 chars, then draw)
-    draw_string(36, 3, "                  ", HUD_COL_WHITE, HUD_COL_BG);
-    draw_string(36, 3, patch_names[current_instrument], HUD_COL_WHITE, HUD_COL_BG);
+    draw_string(11, 8, "                  ", HUD_COL_WHITE, HUD_COL_BG);
+    draw_string(11, 8, patch_names[current_instrument], HUD_COL_WHITE, HUD_COL_BG);
     
     // Global Brush Volume (00-3F)
-    draw_hex_byte(text_message_addr + (3 * 80 + 62) * 3, current_volume);
+    draw_hex_byte_coloured(text_message_addr + (8 * 80 + 37) * 3, current_volume, HUD_COL_WHITE, HUD_COL_BG);
     
     // Record State: ON (Red) or OFF (Green)
-    draw_string(70, 3, edit_mode ? "ON " : "OFF", edit_mode ? HUD_COL_RED : HUD_COL_GREEN, HUD_COL_BG);
+    draw_string(74, 3, edit_mode ? "ON " : "OFF", edit_mode ? HUD_COL_RED : HUD_COL_GREEN, HUD_COL_BG);
 
     // --- Row 4: Pattern & Sequence ---
     // The pattern currently being edited (F9/F10)
-    draw_hex_byte(text_message_addr + (4 * 80 + 12) * 3, cur_pattern);
+    draw_hex_byte_coloured(text_message_addr + (4 * 80 + 12) * 3, cur_pattern, HUD_COL_WHITE, HUD_COL_BG);
     
     // The Playlist scrolling preview
     update_order_display(); 
     
     // Total Song Length and Sequencer Status
-    draw_hex_byte(text_message_addr + (4 * 80 + 62) * 3, (uint8_t)song_length);
-    draw_string(70, 4, seq.is_playing ? "PLAY" : "STOP", seq.is_playing ? HUD_COL_GREEN : HUD_COL_RED, HUD_COL_BG);
+    draw_hex_byte_coloured(text_message_addr + (5 * 80 + 74) * 3, (uint8_t)song_length, HUD_COL_WHITE, HUD_COL_BG);
+    draw_string(74, 4, seq.is_playing ? "PLAY" : "STOP", seq.is_playing ? HUD_COL_GREEN : HUD_COL_RED, HUD_COL_BG);
 
     // --- Row 8-12: Operator 1 (Modulator) ---
-    draw_hex_byte(text_message_addr + (9 * 80 + 15) * 3, p->m_ave);
-    draw_hex_byte(text_message_addr + (10 * 80 + 15) * 3, p->m_ksl);
-    draw_hex_byte(text_message_addr + (11 * 80 + 15) * 3, p->m_atdec);
-    draw_hex_byte(text_message_addr + (12 * 80 + 15) * 3, p->m_susrel);
-    draw_hex_byte(text_message_addr + (13 * 80 + 15) * 3, p->m_wave);
+    draw_hex_byte(text_message_addr + (13 * 80 + 15) * 3, p->m_ave);
+    draw_hex_byte(text_message_addr + (14 * 80 + 15) * 3, p->m_ksl);
+    draw_hex_byte(text_message_addr + (15 * 80 + 15) * 3, p->m_atdec);
+    draw_hex_byte(text_message_addr + (16 * 80 + 15) * 3, p->m_susrel);
+    draw_hex_byte(text_message_addr + (17 * 80 + 15) * 3, p->m_wave);
     
     // --- Row 8-12: Operator 2 (Carrier) ---
-    draw_hex_byte(text_message_addr + (9 * 80 + 42) * 3, p->c_ave);
-    draw_hex_byte(text_message_addr + (10 * 80 + 42) * 3, p->c_ksl);
-    draw_hex_byte(text_message_addr + (11 * 80 + 42) * 3, p->c_atdec);
-    draw_hex_byte(text_message_addr + (12 * 80 + 42) * 3, p->c_susrel);
-    draw_hex_byte(text_message_addr + (13 * 80 + 42) * 3, p->c_wave);
+    draw_hex_byte(text_message_addr + (13 * 80 + 42) * 3, p->c_ave);
+    draw_hex_byte(text_message_addr + (14 * 80 + 42) * 3, p->c_ksl);
+    draw_hex_byte(text_message_addr + (15 * 80 + 42) * 3, p->c_atdec);
+    draw_hex_byte(text_message_addr + (16 * 80 + 42) * 3, p->c_susrel);
+    draw_hex_byte(text_message_addr + (17 * 80 + 42) * 3, p->c_wave);
 
     // --- Row 13: Global FM Parameters ---
-    draw_hex_byte(text_message_addr + (14 * 80 + 15) * 3, p->feedback);
+    draw_hex_byte(text_message_addr + (18 * 80 + 15) * 3, p->feedback);
     
     // Connection type display (Bit 0 of Feedback register)
     bool additive = (p->feedback & 0x01);
@@ -420,14 +462,14 @@ void update_meters(void) {
         if (ch_peaks[i] > 1) ch_peaks[i]-=2; 
         
         // Label: CHx
-        draw_string(57, 8 + i, "CH", HUD_COL_CYAN, HUD_COL_BG);
-        uint16_t num_ptr = text_message_addr + ((8 + i) * 80 + 59) * 3;
+        draw_string(57, 10 + i, "CH", HUD_COL_CYAN, HUD_COL_BG);
+        uint16_t num_ptr = text_message_addr + ((10 + i) * 80 + 59) * 3;
         RIA.addr0 = num_ptr;
         RIA.step0 = 1;
         RIA.rw0 = '0' + i; RIA.rw0 = HUD_COL_WHITE; RIA.rw0 = HUD_COL_BG;
         
         // Meter Bar: [##########]
-        draw_meter(61, 8 + i, ch_peaks[i]);
+        draw_meter(61, 10 + i, ch_peaks[i]);
     }
 }
 
