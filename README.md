@@ -63,10 +63,4 @@ The screen is split into a **Dashboard** (top) and the **Pattern Grid** (bottom)
 
 ---
 
-## 🛠 Memory Architecture
-- **Patterns:** XRAM `$0000`. 2,304 bytes per 64-row pattern.
-- **Instruments:** 256 patches in 6502 RAM.
-- **Video:** VGA Mode 1 at `$C000`.
-
----
 *Developed for the RP6502 Picocomputer Project.*

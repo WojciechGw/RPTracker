@@ -4,3 +4,5 @@ __pycache__
 CMakeUserPresets.json
 out
 junk
+.DS_Store
+DEMO.RPT
