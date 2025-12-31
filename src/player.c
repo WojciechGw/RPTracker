@@ -504,7 +504,7 @@ void handle_song_order_input() {
             update_dashboard();
         }
         if (key_pressed(KEY_F12)) {
-            if (song_length < MAX_ORDERS) song_length++; // Warning fixed by uint16_t
+            if (song_length < MAX_ORDERS_USER) song_length++; // Warning fixed by uint16_t
             update_dashboard();
         }
 

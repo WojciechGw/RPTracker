@@ -2,7 +2,8 @@
 #define SONG_H
 
 #define ORDER_LIST_XRAM 0xB000
-#define MAX_ORDERS 64
+#define MAX_ORDERS 256 // Note, the user is limited to 64 in the UI, so we could grow in the future.
+#define MAX_ORDERS_USER 64
 
 extern uint8_t cur_order_idx;
 extern uint16_t song_length;
