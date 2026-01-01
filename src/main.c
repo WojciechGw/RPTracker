@@ -8,6 +8,7 @@
 #include "screen.h"
 #include "song.h"
 #include "usb_hid_keys.h"
+#include "effects.h"
 
 unsigned text_message_addr;         // Text message address
 
@@ -64,6 +65,13 @@ void init_patterns(void) {
     for (uint16_t i = 0; i < 49152U; i++) {
         RIA.rw0 = 0; 
     }
+
+    for (int i=0; i<9; i++) {
+        last_effect[i] = 0xFFFF;
+        ch_arp[i].active = false;
+        ch_porta[i].active = false;
+    }
+
 }
 
 int main(void)

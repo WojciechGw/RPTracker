@@ -290,8 +290,44 @@ void sequencer_step(void) {
                     ch_arp[ch].phase_timer = 0;
                     ch_arp[ch].step_index = 0;
                     ch_arp[ch].just_triggered = true; // Mark as just started
+                } else if (cmd == 2) {
+                    // Portamento: 2SDT
+                    // S = Mode (0=Up, 1=Down, 2=To Target)
+                    // D = Speed (ticks between steps)
+                    // T = Target note or semitone count
+                    
+                    // Determine starting note: use note on this row if present, else use base_note
+                    uint8_t start_note = (cell.note != 0 && cell.note != 255) ? cell.note : ch_arp[ch].base_note;
+                    uint8_t start_inst = (cell.note != 0 && cell.note != 255) ? cell.inst : ch_arp[ch].inst;
+                    uint8_t start_vol = (cell.note != 0 && cell.note != 255) ? cell.vol : ch_arp[ch].vol;
+                    
+                    ch_porta[ch].current_note = start_note;
+                    ch_porta[ch].inst = start_inst;
+                    ch_porta[ch].vol = start_vol;
+                    
+                    ch_porta[ch].active = true;
+                    ch_porta[ch].mode = (eff >> 8) & 0x0F;
+                    ch_porta[ch].speed = ((eff >> 4) & 0x0F);
+                    if (ch_porta[ch].speed == 0) ch_porta[ch].speed = 1; // Prevent divide by zero
+                    ch_porta[ch].target_note = (eff & 0x0F);
+                    ch_porta[ch].tick_counter = 0;
+                    
+                    // If mode 2, target is absolute note; otherwise use as semitone count
+                    if (ch_porta[ch].mode != 2) {
+                        uint8_t semitones = ch_porta[ch].target_note;
+                        if (semitones == 0) semitones = 12; // Default to octave
+                        if (ch_porta[ch].mode == 0) { // Up
+                            ch_porta[ch].target_note = (ch_porta[ch].current_note + semitones) > 127 ? 
+                                127 : ch_porta[ch].current_note + semitones;
+                        } else { // Down
+                            ch_porta[ch].target_note = (ch_porta[ch].current_note < semitones) ? 
+                                0 : ch_porta[ch].current_note - semitones;
+                        }
+                    }
+                    ch_arp[ch].active = false; // Portamento kills arpeggio
                 } else if (eff == 0xF000 || (cell.note != 0 && cmd == 0)) {
                     ch_arp[ch].active = false;
+                    ch_porta[ch].active = false;
                 }
                 last_effect[ch] = cell.effect; // Update shadow
             }
@@ -303,6 +339,11 @@ void sequencer_step(void) {
                     ch_arp[ch].base_note = cell.note;
                     ch_arp[ch].inst = cell.inst;
                     ch_arp[ch].vol  = cell.vol;
+                    
+                    // Initialize portamento state
+                    ch_porta[ch].current_note = cell.note;
+                    ch_porta[ch].inst = cell.inst;
+                    ch_porta[ch].vol = cell.vol;
                     
                     // If we just triggered a new note, we reset the phase 
                     // so the melody remains predictable/on-beat.
@@ -346,6 +387,7 @@ void sequencer_step(void) {
     // --- PHASE B: PER-VSYNC TICK ---
     for (uint8_t ch = 0; ch < 9; ch++) {
         process_arp_logic(ch);
+        process_portamento_logic(ch);
     }
 }
 
@@ -384,6 +426,7 @@ void handle_transport_controls() {
         for (int i=0; i<9; i++) {
             last_effect[i] = 0xFFFF;
             ch_arp[i].active = false;
+            ch_porta[i].active = false;
         }
 
         // Reset to beginning

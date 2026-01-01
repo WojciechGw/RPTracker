@@ -110,6 +110,43 @@ The Arpeggio engine retriggers the note on every cycle step to ensure a crisp, c
 
 ---
 
+### 🎶 Effect Command 2: Portamento (2SDT)
+Portamento creates smooth pitch slides between notes, adding expression and fluidity to melodies.
+The effect continuously steps through semitones until reaching the target note.
+
+**Format: `2 S D T`**
+
+*   **2**: Command ID (Portamento).
+*   **S (Mode)**: The slide direction:
+    *   `0`: **UP** - Slides upward by T semitones from the current note
+    *   `1`: **DOWN** - Slides downward by T semitones from the current note
+    *   `2`: **TO TARGET** - Slides to the absolute MIDI note specified in T
+    
+*   **D (Speed)**: Ticks between each semitone step (1-F):
+    *   `1`: Very fast (every tick, 6 steps per row)
+    *   `2-3`: Fast slide
+    *   `4-6`: Medium slide (musical default)
+    *   `7-9`: Slow slide
+    *   `A-F`: Very slow (10-15 ticks per step)
+
+*   **T (Target)**: The slide distance or destination:
+    *   **Modes 0 & 1**: Number of semitones to slide (0 = 12 semitones/1 octave default)
+    *   **Mode 2**: Absolute MIDI note number to slide to (0-7F)
+
+**Usage:**
+- `2036`: Slide up 3 semitones, moving every 6 ticks (smooth upward bend).
+- `211C`: Slide down 12 semitones (1 octave), moving every tick (fast drop).
+- `2043`: Slide up 4 semitones at medium speed (classic pitch bend).
+- `221C`: Slide to MIDI note 28 (middle C) at fast speed.
+- `F000` or `0000`: Stop portamento effect.
+
+**Notes:**
+- Portamento and Arpeggio are mutually exclusive - activating one disables the other.
+- The effect automatically stops when reaching the target note.
+- Combine with Note Off (`===`) for creative pitch drops.
+
+---
+
 ## 🖥 User Interface Guide
 
 ### The Dashboard (Top)

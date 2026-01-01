@@ -9,6 +9,7 @@
 
 // State memory for all 9 channels
 ArpState ch_arp[9];
+PortamentoState ch_porta[9];
 
 const uint8_t arp_tick_lut[16] = {
     1, 2, 3, 6, 9, 12, 18, 24, 30, 36, 42, 48, 60, 72, 84, 96
@@ -106,4 +107,58 @@ void process_arp_logic(uint8_t ch) {
     OPL_SetVolume(ch, ch_arp[ch].vol << 1); 
     OPL_NoteOn(ch, ch_arp[ch].base_note + offset);
     ch_peaks[ch] = ch_arp[ch].vol; 
+}
+
+void process_portamento_logic(uint8_t ch) {
+    if (!ch_porta[ch].active) return;
+
+    ch_porta[ch].tick_counter++;
+
+    // Wait for speed delay
+    if (ch_porta[ch].tick_counter < ch_porta[ch].speed) return;
+
+    ch_porta[ch].tick_counter = 0;
+
+    uint8_t current = ch_porta[ch].current_note;
+    uint8_t target = ch_porta[ch].target_note;
+    bool reached_target = false;
+
+    // Calculate next note based on mode
+    if (ch_porta[ch].mode == 0) { // Up
+        if (current < 127) {
+            current++;
+            if (target > 0 && current >= target) reached_target = true;
+        } else {
+            reached_target = true;
+        }
+    } else if (ch_porta[ch].mode == 1) { // Down
+        if (current > 0) {
+            current--;
+            if (target > 0 && current <= target) reached_target = true;
+        } else {
+            reached_target = true;
+        }
+    } else if (ch_porta[ch].mode == 2) { // To Target
+        if (current < target) {
+            current++;
+        } else if (current > target) {
+            current--;
+        } else {
+            reached_target = true;
+        }
+    }
+
+    // Stop if reached target
+    if (reached_target) {
+        ch_porta[ch].active = false;
+        return;
+    }
+
+    // Update note
+    ch_porta[ch].current_note = current;
+    OPL_NoteOff(ch);
+    OPL_SetPatch(ch, &gm_bank[ch_porta[ch].inst]);
+    OPL_SetVolume(ch, ch_porta[ch].vol << 1);
+    OPL_NoteOn(ch, current);
+    ch_peaks[ch] = ch_porta[ch].vol;
 }

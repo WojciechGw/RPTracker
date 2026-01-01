@@ -15,9 +15,22 @@ typedef struct {
     bool    just_triggered; // Prevents double-hit on same frame
 } ArpState;
 
+typedef struct {
+    uint8_t current_note;
+    uint8_t target_note;
+    uint8_t inst;
+    uint8_t vol;
+    uint8_t mode;         // 0=Up, 1=Down, 2=To Target
+    uint8_t speed;        // Ticks between steps
+    uint8_t tick_counter;
+    bool    active;
+} PortamentoState;
+
 extern ArpState ch_arp[9];
+extern PortamentoState ch_porta[9];
 
 extern void process_arp_logic(uint8_t ch);
+extern void process_portamento_logic(uint8_t ch);
 extern int16_t get_arp_offset(uint8_t style, uint8_t depth, uint8_t index);
 extern const uint8_t arp_tick_lut[16];
 
