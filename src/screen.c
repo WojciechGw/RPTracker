@@ -307,7 +307,7 @@ void update_cpu_speed_display(void) {
 
     // 3. Point to the "CPU: " value position on Row 19
     // Column 60 is where the number starts
-    uint16_t vga_ptr = text_message_addr + (21 * 80 + 70) * 3;
+    uint16_t vga_ptr = text_message_addr + (1 * 80 + 54) * 3;
     RIA.addr0 = vga_ptr;
     RIA.step0 = 3; // We skip color bytes to keep whatever colors draw_ui_dashboard set
 
@@ -363,7 +363,7 @@ void draw_ui_dashboard(void) {
 
     for(uint8_t i=20; i<26; i++) {
         draw_string(0, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
-        draw_string(63, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
+        // draw_string(63, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
         draw_string(79, i, "|", HUD_COL_DARKGREY, HUD_COL_BG);
     }
     draw_string(0, 26, h_line, HUD_COL_DARKGREY, HUD_COL_BG);
@@ -377,7 +377,15 @@ void draw_ui_dashboard(void) {
     draw_string(31 + 13, 1, " ]", HUD_COL_WHITE, HUD_COL_BG);
     
     
-    draw_string(61, 1, "BPM: 150  TKS: 00", HUD_COL_CYAN, HUD_COL_BG);
+    // draw_string(61, 1, "BPM: 150  TKS: 00", HUD_COL_CYAN, HUD_COL_BG);
+    // draw_string(47, 1, "[ SYSTEM ]", HUD_COL_YELLOW, HUD_COL_BG);
+    draw_string(50, 1, "CPU: ", HUD_COL_WHITE, HUD_COL_BG);
+    update_cpu_speed_display();
+    #ifdef USE_NATIVE_OPL2
+        draw_string(65, 1, "OPL: NATIVE", HUD_COL_WHITE, HUD_COL_BG);
+    #else
+        draw_string(65, 1, "OPL: FPGA  ", HUD_COL_WHITE, HUD_COL_BG);
+    #endif
 
     // draw_string(2, 3, "MODE: [       ]  OCT:    INS:    (                  )  VOL:    REC: ", HUD_COL_CYAN, HUD_COL_BG);
     draw_string(2, 3, "MODE:[       ] SEQ:                                                REC: ", HUD_COL_CYAN, HUD_COL_BG);
@@ -418,40 +426,27 @@ void draw_ui_dashboard(void) {
     // Row 20: Title
     draw_string(1, 20, "[ COMMAND CHEATSHEET ]", HUD_COL_YELLOW, HUD_COL_BG);
 
-    // Column Alignment Guide:
-    // Col 1: Starts at 2.  Label is 11 chars + " : " (3) = 14 chars. Key starts at 16.
-    // Col 2: Starts at 28. Label is 11 chars + " : " (3) = 14 chars. Key starts at 42.
-    // Col 3: Starts at 54. Label is 11 chars + " : " (3) = 14 chars. Key starts at 68.
+    // Row 21: Navigation & Performance
+    draw_string(2, 21, "Octave  : F1/F2   Pattern   : F9/10    Effect Mode: /       ", HUD_COL_CYAN, HUD_COL_BG);
+    // Row 22: Editing & Tools
+    draw_string(2, 22, "Inst    : F3/F4   Sequence  : F11/12   Vol/Effect : [ / ]   ", HUD_COL_CYAN, HUD_COL_BG);
+    // Row 23: Tools & Effects
+    draw_string(2, 23, "Pick Ins: F5      Transpose : - / =    Effect Par : ; / '   ", HUD_COL_CYAN, HUD_COL_BG);
+    // Row 24: Transport & Files
+    draw_string(2, 24, "Play    : F6/F7   Copy/Paste: Ctrl+C/V Save/Load  : Ctrl+S/O", HUD_COL_CYAN, HUD_COL_BG);
+    // Row 25: Mode & Safety
+    draw_string(2, 25, "Record  : Space   Song Mode : F8       Panic      : Esc     ", HUD_COL_CYAN, HUD_COL_BG);
 
-    // Row 21: Performance / Nav / Edit
-    draw_string(2, 21, "Octave     : F1/F2   Mode      : F8       Transpose : - / =", HUD_COL_CYAN, HUD_COL_BG);
-    // Row 22: Performance / Nav / Edit
-    draw_string(2, 22, "Instrument : F3/F4   Pattern   : F9/10    Volume    : [ / ]", HUD_COL_CYAN, HUD_COL_BG);
-    // Row 23: Performance / Nav / Edit
-    draw_string(2, 23, "Pick Ins   : F5      Sequence  : F11/12   Record    : Space", HUD_COL_CYAN, HUD_COL_BG);
-    // Row 24: Transport / Clipboard / Files
-    draw_string(2, 24, "Play/Stop  : F6/F7   Copy Pat  : Ctrl+C   Save Song : Ctrl+S", HUD_COL_CYAN, HUD_COL_BG);
-    // Row 25: Safety / Clipboard / Files
-    draw_string(2, 25, "Panic      : Esc     Paste Pat : Ctrl+V   Load Song : Ctrl+O", HUD_COL_CYAN, HUD_COL_BG);
-
-    // Highlight the KEYS in White (Offset to the right of the colons)
+    // Highlight the KEYS in White
     for (uint8_t r = 21; r <= 25; r++) {
-        // Col 1 Keys (starts at 15, covers 5-6 chars)
-        set_text_color(15, r, 6, HUD_COL_WHITE, HUD_COL_BG); 
-        // Col 2 Keys (starts at 41, covers 6-7 chars)
-        set_text_color(35, r, 7, HUD_COL_WHITE, HUD_COL_BG);
-        // Col 3 Keys (starts at 67, covers 7 chars)
-        set_text_color(56, r, 7, HUD_COL_WHITE, HUD_COL_BG);
+        // Col 1 Keys (starts at 12)
+        set_text_color(12, r, 5, HUD_COL_WHITE, HUD_COL_BG); 
+        // Col 2 Keys (starts at 32)
+        set_text_color(32, r, 7, HUD_COL_WHITE, HUD_COL_BG);
+        // Col 3 Keys (starts at 53)
+        set_text_color(53, r, 9, HUD_COL_WHITE, HUD_COL_BG);
     }
     
-    draw_string(65, 20, "[ SYSTEM ]", HUD_COL_YELLOW, HUD_COL_BG);
-    draw_string(66, 21, "CPU: ", HUD_COL_WHITE, HUD_COL_BG);
-    update_cpu_speed_display();
-    #ifdef USE_NATIVE_OPL2
-        draw_string(66, 22, "OPL: NATIVE", HUD_COL_WHITE, HUD_COL_BG);
-    #else
-        draw_string(66, 22, "OPL: FPGA  ", HUD_COL_WHITE, HUD_COL_BG);
-    #endif
 }
 
 void update_dashboard(void) {
