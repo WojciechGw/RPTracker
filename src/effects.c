@@ -111,9 +111,12 @@ void process_arp_logic(uint8_t ch) {
 
     OPL_NoteOff(ch);
     OPL_SetPatch(ch, &gm_bank[ch_arp[ch].inst]);
-    OPL_SetVolume(ch, ch_arp[ch].vol << 1); 
+    
+    // Use volume slide's current volume if active, otherwise use arp's original volume
+    uint8_t vol = ch_volslide[ch].active ? ch_volslide[ch].current_vol : ch_arp[ch].vol;
+    OPL_SetVolume(ch, vol << 1); 
     OPL_NoteOn(ch, ch_arp[ch].base_note + offset);
-    ch_peaks[ch] = ch_arp[ch].vol; 
+    ch_peaks[ch] = vol; 
 }
 
 void process_portamento_logic(uint8_t ch) {
@@ -175,8 +178,8 @@ void process_volume_slide_logic(uint8_t ch) {
 
     ch_volslide[ch].tick_counter++;
 
-    // Process every tick (no speed delay for smooth volume changes)
-    if (ch_volslide[ch].tick_counter < 1) return;
+    // Slow down volume slide: process every 4 ticks for smoother OPL2 logarithmic volume
+    if (ch_volslide[ch].tick_counter < 4) return;
 
     ch_volslide[ch].tick_counter = 0;
 
@@ -184,45 +187,54 @@ void process_volume_slide_logic(uint8_t ch) {
     uint8_t target = ch_volslide[ch].target_vol;
     uint8_t speed = ch_volslide[ch].speed;
     if (speed == 0) speed = 1;
+    
+    // For OPL2 logarithmic volume, slow down by limiting step size
+    if (speed > 2) speed = 2; // Cap speed at 2 for smoother slides
+    
     bool reached_target = false;
 
     // Calculate next volume based on mode
     if (ch_volslide[ch].mode == 0) { // Up
-        if (current + speed < 63) {
+        if (current + speed <= 63) {
             current += speed;
-            if (target > 0 && current >= target) {
-                current = target;
-                reached_target = true;
-            }
         } else {
             current = 63;
+        }
+        if (target > 0 && current >= target) {
+            current = target;
+            reached_target = true;
+        }
+        if (current >= 63) {
             reached_target = true;
         }
     } else if (ch_volslide[ch].mode == 1) { // Down
-        if (current > speed) {
+        if (current >= speed) {
             current -= speed;
-            if (target > 0 && current <= target) {
-                current = target;
-                reached_target = true;
-            }
         } else {
             current = 0;
+        }
+        if (target > 0 && current <= target) {
+            current = target;
+            reached_target = true;
+        }
+        if (current == 0) {
             reached_target = true;
         }
     } else if (ch_volslide[ch].mode == 2) { // To Target
         if (current < target) {
-            current += speed;
-            if (current >= target) {
+            if (current + speed <= target) {
+                current += speed;
+            } else {
                 current = target;
-                reached_target = true;
             }
         } else if (current > target) {
-            current -= speed;
-            if (current <= target) {
+            if (current >= target + speed) {
+                current -= speed;
+            } else {
                 current = target;
-                reached_target = true;
             }
-        } else {
+        }
+        if (current == target) {
             reached_target = true;
         }
     }
