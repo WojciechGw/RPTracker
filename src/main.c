@@ -172,7 +172,7 @@ int main(void)
             if (cur_row != prev_row || cur_channel != prev_chan || edit_mode != prev_edit_mode) {
                 update_cursor_visuals(prev_row, cur_row, prev_chan, cur_channel);
 
-                // mark_playhead(play_row);
+                mark_playhead(play_row);
                 
                 // SYNC: Ensure the OPL2 hardware channel we just moved into 
                 // is loaded with our current "brush" instrument.

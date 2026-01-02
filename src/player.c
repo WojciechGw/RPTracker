@@ -559,34 +559,14 @@ void sequencer_step(void) {
         // update_cursor_visuals(old_row, cur_row, cur_channel, cur_channel);
         // if (pattern_changed || cur_row == 0) update_dashboard();
 
-        // --- SYNC THE UI TO THE CURRENT SOUND ---
-        // We mark the playhead BEFORE we increment the variable.
-        mark_playhead(play_row);
-
+        // Handle Follow Mode (Sync cursor to the note just struck)
         if (is_follow_mode) {
             uint8_t old_edit_row = cur_row;
             cur_row = play_row;
             if (cur_row != old_edit_row) {
                 update_cursor_visuals(old_edit_row, cur_row, cur_channel, cur_channel);
-                // Re-mark playhead after visuals update because update_cursor calls render_row
-                mark_playhead(play_row); 
             }
         }
-
-        // --- ADVANCE POINTERS FOR THE NEXT BEAT ---
-        if (play_row < 31) {
-            play_row++;
-        } else {
-            play_row = 0;
-            if (is_song_mode) {
-                cur_order_idx++;
-                if (cur_order_idx >= song_length) cur_order_idx = 0;
-                cur_pattern = read_order_xram(cur_order_idx);
-                render_grid();
-            }
-        }
-
-        if (play_row == 0) update_dashboard();
 
 
     }
@@ -603,6 +583,23 @@ void sequencer_step(void) {
         process_tremolo_logic(ch);
         process_finepitch_logic(ch);
     }
+
+    // If we just finished the last tick of the row (e.g., Tick 5 of 6)
+    if (seq.tick_counter == (seq.ticks_per_row - 1)) {
+        if (play_row < 31) {
+            play_row++;
+        } else {
+            play_row = 0;
+            if (is_song_mode) {
+                cur_order_idx++;
+                if (cur_order_idx >= song_length) cur_order_idx = 0;
+                cur_pattern = read_order_xram(cur_order_idx);
+                render_grid();
+                update_dashboard();
+            }
+        }
+    }
+
 }
 
 void handle_transport_controls() {
