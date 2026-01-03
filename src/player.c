@@ -582,24 +582,6 @@ void sequencer_step(void) {
             }
         }
 
-        // --- Advance Row / UI Pointers ---
-        // uint8_t old_row = cur_row;
-        // bool pattern_changed = false;
-        // if (cur_row < 31) {
-        //     cur_row++;
-        // } else {
-        //     cur_row = 0;
-        //     if (is_song_mode) {
-        //         cur_order_idx++;
-        //         if (cur_order_idx >= song_length) cur_order_idx = 0;
-        //         cur_pattern = read_order_xram(cur_order_idx);
-        //         render_grid(); 
-        //         pattern_changed = true;
-        //     }
-        // }
-        // update_cursor_visuals(old_row, cur_row, cur_channel, cur_channel);
-        // if (pattern_changed || cur_row == 0) update_dashboard();
-
         // Handle Follow Mode (Sync cursor to the note just struck)
         if (is_follow_mode) {
             uint8_t old_edit_row = cur_row;
