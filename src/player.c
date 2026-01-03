@@ -490,6 +490,7 @@ void sequencer_step(void) {
                     ch_generator[ch].range  = (eff >> 4) & 0x0F;
                     ch_generator[ch].target_ticks = arp_tick_lut[eff & 0x0F];
                     ch_generator[ch].timer = 0;
+                    ch_generator[ch].just_triggered = true;
 
                     // --- THE FIX: CAPTURE CONTEXT ---
                     // If there is a note on this row, use it. 
@@ -566,6 +567,7 @@ void sequencer_step(void) {
                         ch_generator[ch].inst = cell.inst;
                         ch_generator[ch].vol  = cell.vol;
                         ch_generator[ch].timer = 0; // Reset timer on new note strike
+                        ch_generator[ch].just_triggered = true; // Match arp timing
                     }
 
                     // Calculate starting offset (Style 1 "Down" starts high!)

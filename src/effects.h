@@ -106,6 +106,7 @@ typedef struct {
     uint8_t target_ticks;
     uint8_t timer;
     bool    active;
+    bool    just_triggered;
 } GenState;
 
 extern ArpState ch_arp[9];

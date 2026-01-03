@@ -451,7 +451,13 @@ void process_finepitch_logic(uint8_t ch) {
 
 void process_gen_logic(uint8_t ch) {
     if (!ch_generator[ch].active) return;
-    if (seq.tick_counter == 0) return; // Let sequencer strike the root
+
+    // --- JUST TRIGGERED GUARD ---
+    // Skip processing this frame to avoid double-hit, matching ch_arp timing
+    if (ch_generator[ch].just_triggered) {
+        ch_generator[ch].just_triggered = false;
+        return;
+    }
 
     ch_generator[ch].timer++;
     if (ch_generator[ch].timer < ch_generator[ch].target_ticks) return;
