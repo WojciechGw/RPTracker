@@ -138,7 +138,9 @@ static void start_export(void) {
     cur_order_idx = 0;
     play_row = 0;
     seq.is_playing = true;
-    seq.tick_counter = 0;
+    // Set to ticks_per_row so first sequencer_step() processes row 0 immediately
+    // (matches behavior of pressing Enter to start playback)
+    seq.tick_counter = seq.ticks_per_row;
     
     // Clear all effect states
     for (int i = 0; i < 9; i++) {
