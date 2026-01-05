@@ -114,6 +114,8 @@ static void derive_export_filename(void) {
 
 static void start_export(void) {
     printf("Starting export...\n");
+
+    OPL_Init(); // Reset OPL state
     
     // Derive filename
     derive_export_filename();
