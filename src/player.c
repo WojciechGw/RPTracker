@@ -44,8 +44,8 @@ uint16_t get_pattern_xram_addr(uint8_t pat, uint8_t row, uint8_t chan) {
 static uint8_t pattern_clipboard[PATTERN_SIZE];
 static bool clipboard_full = false;
 
-// Initialize: 125 BPM = 7.68 ticks/row in 8.8 fixed-point = 0x07AE (1966)
-SequencerState seq = {false, 0x07AE, 0, 125};
+// Initialize: 125 BPM = 7.2 ticks/row in 8.8 fixed-point = 0x0733 (1843)
+SequencerState seq = {false, 0x0733, 0, 125};
 
 #define KEY_REPEAT_DELAY 20 // Frames before repeat starts
 #define KEY_REPEAT_RATE  4  // Frames between repeats
@@ -83,14 +83,14 @@ static int8_t get_semitone(uint8_t scancode) {
 // ============================================================================
 
 // Convert BPM to 8.8 fixed-point ticks_per_row
-// Formula: ticks_per_row = (60 Hz * 60 sec * 4 rows/beat) / BPM / 4 rows/beat
-//        = 3600 / BPM (in fixed point: * 256)
+// Formula: frames_per_row = 3600 frames/min / (BPM * 4 rows/beat)
+//        = 900 / BPM (in 8.8 fixed point: * 256 = 230400 / BPM)
 uint16_t bpm_to_ticks_fp(uint8_t bpm) {
     if (bpm < 60) bpm = 60;
     if (bpm > 240) bpm = 240;
     
-    // Use 32-bit math to avoid overflow: (3600 * 256) / bpm
-    uint32_t ticks = ((uint32_t)921600) / bpm;
+    // Use 32-bit math to avoid overflow: (900 * 256) / bpm
+    uint32_t ticks = ((uint32_t)230400) / bpm;
     return (uint16_t)ticks;
 }
 
@@ -358,6 +358,27 @@ void player_tick(void) {
     // 4. Function Keys (Octave & Instrument)
     if (key_pressed(KEY_F1)) { if (current_octave > 0) current_octave--; update_dashboard(); }
     if (key_pressed(KEY_F2)) { if (current_octave < 8) current_octave++; update_dashboard(); }
+    
+    // F7 / Shift-F7: BPM Control (60-240 BPM range)
+    if (key_pressed(KEY_F7)) {
+        if (is_shift_down()) {
+            // Shift-F7: Decrease BPM
+            if (seq.bpm > 60) {
+                seq.bpm--;
+                seq.ticks_per_row_fp = bpm_to_ticks_fp(seq.bpm);
+                update_dashboard();
+                draw_status_message("Tempo Changed");
+            }
+        } else {
+            // F7: Increase BPM
+            if (seq.bpm < 240) {
+                seq.bpm++;
+                seq.ticks_per_row_fp = bpm_to_ticks_fp(seq.bpm);
+                update_dashboard();
+                draw_status_message("Tempo Changed");
+            }
+        }
+    }
 
     if (key_pressed(KEY_F5)) { // Use F5 to "Pick" the instrument under the cursor
         PatternCell cell;
@@ -498,7 +519,14 @@ void sequencer_step(void) {
                     ch_arp[ch].style  = (eff >> 8) & 0x0F;
                     ch_arp[ch].depth  = (eff >> 4) & 0x0F;
                     ch_arp[ch].speed_idx = (eff & 0x0F);
-                    ch_arp[ch].target_ticks = arp_tick_lut[ch_arp[ch].speed_idx];
+                    
+                    // Scale arpeggio timing with tempo:
+                    // arp_tick_lut is in frames at 150 BPM baseline (1536 = 6 frames/row)
+                    // Scale to current tempo: (base_frames * current_ticks_per_row_fp) / 1536
+                    uint16_t base_frames = arp_tick_lut[ch_arp[ch].speed_idx];
+                    uint32_t scaled = ((uint32_t)base_frames * seq.ticks_per_row_fp) / 1536;
+                    ch_arp[ch].target_ticks = (uint8_t)scaled;
+                    if (ch_arp[ch].target_ticks == 0) ch_arp[ch].target_ticks = 1;
                     
                     // ONLY reset phase if the command actually changed
                     ch_arp[ch].phase_timer = 0;
@@ -691,7 +719,13 @@ void sequencer_step(void) {
                     ch_generator[ch].active = true;
                     ch_generator[ch].scale  = (eff >> 8) & 0x0F;
                     ch_generator[ch].range  = (eff >> 4) & 0x0F;
-                    ch_generator[ch].target_ticks = arp_tick_lut[eff & 0x0F];
+                    
+                    // Scale generator timing with tempo (same as arpeggio)
+                    uint16_t base_frames = arp_tick_lut[eff & 0x0F];
+                    uint32_t scaled = ((uint32_t)base_frames * seq.ticks_per_row_fp) / 1536;
+                    ch_generator[ch].target_ticks = (uint8_t)scaled;
+                    if (ch_generator[ch].target_ticks == 0) ch_generator[ch].target_ticks = 1;
+                    
                     ch_generator[ch].timer = 0;
                     ch_generator[ch].just_triggered = true;
 

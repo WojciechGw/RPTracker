@@ -187,18 +187,19 @@ ticks_per_row_fp = ((60 * 60 * 4) / BPM) * 256
 - [x] Update Shift+Enter reset
   - [x] Change: `seq.tick_counter_fp = 0`
 
-### Phase 4: UI Integration
-- [ ] Add BPM display to dashboard (below "INS:" line)
-  - [ ] Format: "BPM: XXX"
-  - [ ] Update in `update_dashboard()` in screen.c
-- [ ] Add keyboard controls for BPM change
-  - [ ] **F7**: Increase BPM by 1
-  - [ ] **Shift-F7**: Decrease BPM by 1
-  - [ ] Clamp: 60-240 BPM reasonable range
-- [ ] Update BPM when changed
-  - [ ] Recalculate `seq.ticks_per_row_fp = bpm_to_ticks_fp(seq.bpm)`
-  - [ ] Call from keyboard handler in player.c
-- [ ] Update help screen with new shortcuts (main.hlp)
+### Phase 4: UI Integration ✅ COMPLETED
+- [x] Add BPM display to dashboard (below "INS:" line)
+  - [x] Format: "BPM: XXX"
+  - [x] Update in `update_dashboard()` in screen.c
+- [x] Add keyboard controls for BPM change
+  - [x] **F7**: Increase BPM by 1
+  - [x] **Shift-F7**: Decrease BPM by 1
+  - [x] Clamp: 60-240 BPM reasonable range
+- [x] Update BPM when changed
+  - [x] Recalculate `seq.ticks_per_row_fp = bpm_to_ticks_fp(seq.bpm)`
+  - [x] Call from keyboard handler in player.c
+- [x] Update help screen with new shortcuts (on-screen cheatsheet row 23)
+- [x] Add status message feedback ("Tempo Changed")
 
 ### Phase 5: File Format Integration
 - [ ] Add BPM to song file format (.RPT)

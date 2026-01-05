@@ -20,8 +20,10 @@ TremoloState ch_tremolo[9];
 FinePitchState ch_finepitch[9];
 GenState ch_generator[9];
 
+// Arpeggio tick lookup table (frames at 150 BPM baseline: 6 frames/row)
+// Musical intervals: 3=1row, 7=2rows, 11=4rows(1beat), 15=16rows(1bar)
 const uint8_t arp_tick_lut[16] = {
-    1, 2, 3, 6, 9, 12, 18, 24, 30, 36, 42, 48, 60, 72, 84, 96
+    1, 2, 3, 6, 9, 12, 15, 12, 18, 21, 24, 24, 36, 54, 72, 96
 };
 
 // Scale intervals (semitones from root)

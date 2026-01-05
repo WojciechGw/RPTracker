@@ -109,6 +109,31 @@ void draw_hex_byte_coloured(uint16_t vga_addr, uint8_t val, uint8_t fg, uint8_t 
     RIA.rw0 = bg;                    // Background
 }
 
+void draw_decimal_byte_coloured(uint16_t vga_addr, uint8_t val, uint8_t fg, uint8_t bg) {
+    RIA.addr0 = vga_addr;
+    RIA.step0 = 1; // Write every byte (Char, FG, BG)
+    
+    // Calculate decimal digits (hundreds, tens, ones)
+    uint8_t hundreds = val / 100;
+    uint8_t tens = (val / 10) % 10;
+    uint8_t ones = val % 10;
+    
+    // First Digit (hundreds)
+    RIA.rw0 = '0' + hundreds;
+    RIA.rw0 = fg;
+    RIA.rw0 = bg;
+    
+    // Second Digit (tens)
+    RIA.rw0 = '0' + tens;
+    RIA.rw0 = fg;
+    RIA.rw0 = bg;
+    
+    // Third Digit (ones)
+    RIA.rw0 = '0' + ones;
+    RIA.rw0 = fg;
+    RIA.rw0 = bg;
+}
+
 // pattern_row_idx: The row index in the pattern data (0-31)
 void render_row(uint8_t row_idx) {
     PatternCell row_data[9];
@@ -400,6 +425,9 @@ void draw_ui_dashboard(void) {
 
     // Instrument Name
     draw_string(2, 8, "INS:    (                  )  VOL:     OCT:   ", HUD_COL_CYAN, HUD_COL_BG);
+    
+    // BPM Display (below INS:)
+    draw_string(2, 9, "BPM:     ", HUD_COL_CYAN, HUD_COL_BG);
 
     // 3. Operator Headers
     draw_string(2, 11, "[ MODULATOR / OP1 ]", HUD_COL_YELLOW, HUD_COL_BG);
@@ -439,7 +467,7 @@ void draw_ui_dashboard(void) {
     // Row 22: Editing & Tools
     draw_string(2, 22, "Inst    : F3/F4   Sequence  : F11/12   Vol/Effect : [ / ]   ", HUD_COL_CYAN, HUD_COL_BG);
     // Row 23: Tools & Effects
-    draw_string(2, 23, "Pick Ins: F5      Transpose : - / =    Effect Par : ; / '   ", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(2, 23, "Pick Ins: F5      Transpose : - / =    Effect Par : ; / '   Tempo: F7/Sh-F7", HUD_COL_CYAN, HUD_COL_BG);
     // Row 24: Transport & Files
     draw_string(2, 24, "Play    : Enter   Copy/Paste: Ctrl+C/V Save/Load  : Ctrl+S/O", HUD_COL_CYAN, HUD_COL_BG);
     // Row 25: Mode & Safety
@@ -475,6 +503,9 @@ void update_dashboard(void) {
     
     // Global Brush Volume (00-3F)
     draw_hex_byte_coloured(text_message_addr + (8 * 80 + 37) * 3, current_volume, HUD_COL_WHITE, HUD_COL_BG);
+    
+    // BPM Value (row 9, col 7-9) - Display in DECIMAL
+    draw_decimal_byte_coloured(text_message_addr + (9 * 80 + 7) * 3, seq.bpm, HUD_COL_WHITE, HUD_COL_BG);
     
     // Record State: ON (Red) or OFF (Green)
     draw_string(74, 3, edit_mode ? "ON " : "OFF", edit_mode ? HUD_COL_RED : HUD_COL_GREEN, HUD_COL_BG);
@@ -593,6 +624,14 @@ void refresh_all_ui(void) {
     render_grid();       // Redraws the 32-row pattern grid (Row 28-59)
     update_cursor_visuals(cur_row, cur_row, cur_channel, cur_channel); // Restores cursor highlight
     mark_playhead(play_row); // Restores playhead marker
+}
+
+void draw_status_message(const char* msg) {
+    // Display status message at row 22, starting after "Inst    : F3/F4   Sequence  : F11/12   Vol/Effect : [ / ]   "
+    // Clear the area first (columns 63-79 on row 22)
+    draw_string(63, 22, "                ", HUD_COL_WHITE, HUD_COL_BG);
+    // Draw the message
+    draw_string(63, 22, msg, HUD_COL_YELLOW, HUD_COL_BG);
 }
 
 
