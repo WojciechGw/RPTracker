@@ -28,6 +28,7 @@ These keys adjust the settings used when recording **new** notes.
 *   **F6**: **Toggle Follow Mode.** 
     *   *ON (Green):* Grid follows the playhead.
     *   *OFF (Red):* Grid stays put while music plays in the background.
+*   **F7 / SHIFT + F7**: **Increase / Decrease BPM.** Adjust the song tempo (60-240 BPM, default 125). Display updates in real-time on the dashboard.
 *   **ESC**: **Emergency Panic.** Immediate silence on all channels.
 
 ### 4. Editing & Grid Commands
