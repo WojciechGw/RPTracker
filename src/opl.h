@@ -1,6 +1,8 @@
 #ifndef OPL_H
 #define OPL_H
 
+#include <stdbool.h>
+
 #define MUSIC_FILENAME "music.bin"
 
 typedef struct {
@@ -15,6 +17,11 @@ extern uint8_t shadow_b0[9];
 extern uint8_t shadow_ksl_m[9];
 extern uint8_t shadow_ksl_c[9];
 extern uint8_t opl_hardware_shadow[256];
+
+// Export state
+extern bool is_exporting;
+extern uint16_t export_idx;
+extern uint16_t accumulated_delay;
 
 extern const uint16_t fnum_table[12];
 

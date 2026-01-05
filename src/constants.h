@@ -28,6 +28,11 @@ extern unsigned text_message_addr; // Address where text message starts in XRAM
 #define KEYBOARD_INPUT  0xFFA0  // XRAM address for keyboard data
 #define PSG_XRAM_ADDR   0xFFC0  // PSG memory location (must match sound.c)
 
+// Data export buffer
+#define EXPORT_BUF_XRAM  0xF850  // End of message buffer
+#define EXPORT_BUF_MAX   0xFE00  // Ensure we don't overwrite OPL area
+#define EXPORT_CHUNK     512     // Bytes per disk write (must be multiple of 512)
+
 // Controller input
 #define GAMEPAD_COUNT 4       // Support up to 4 gamepads
 #define GAMEPAD_DATA_SIZE 10  // 10 bytes per gamepad

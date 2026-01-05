@@ -9,6 +9,7 @@
 #include "player.h"
 #include "screen.h"
 
+
 #ifdef USE_NATIVE_OPL2
 // F-Number table for Octave 4 @ 3.58 MHz
 const uint16_t fnum_table[12] = {
@@ -21,6 +22,12 @@ const uint16_t fnum_table[12] = {
     309, 327, 346, 367, 389, 412, 436, 462, 490, 519, 550, 583
 };
 #endif
+
+
+// Export State
+bool is_exporting = false;
+uint16_t export_idx = 0;       // Current offset in the XRAM buffer
+uint16_t accumulated_delay = 0; // Ticks since the last captured command
 
 uint8_t channel_is_drum[9] = {0,0,0,0,0,0,0,0,0}; 
 
@@ -70,6 +77,33 @@ void OPL_Write(uint8_t reg, uint8_t data) {
 
     // Update the shadow
     opl_hardware_shadow[reg] = data;
+
+    // Intercept for Binary Export
+    if (is_exporting) {
+        // Check if buffer would overflow
+        if (export_idx >= (EXPORT_BUF_MAX - EXPORT_BUF_XRAM - 4)) {
+            // Buffer full - this shouldn't happen with proper flushing
+            // but prevent corruption
+            return;
+        }
+        
+        // Point RIA to our staging buffer in XRAM
+        RIA.addr0 = EXPORT_BUF_XRAM + export_idx;
+        RIA.step0 = 1;
+
+        // Write the 4-byte packet: [Reg, Val, DelayLo, DelayHi]
+        RIA.rw0 = reg;
+        RIA.rw0 = data;
+        RIA.rw0 = (uint8_t)(accumulated_delay & 0xFF);
+        RIA.rw0 = (uint8_t)(accumulated_delay >> 8);
+
+        export_idx += 4;
+        
+        // Reset delay: subsequent commands on this same tick will have 0 delay
+        accumulated_delay = 0; 
+        
+        return; // Do not write to hardware while exporting
+    }
 
 #ifdef USE_NATIVE_OPL2
     RIA.addr1 = OPL_ADDR + reg;

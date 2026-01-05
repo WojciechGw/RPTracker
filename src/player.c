@@ -4,6 +4,8 @@
 #include "input.h"
 #include "usb_hid_keys.h"
 #include <stdio.h>
+#include <fcntl.h>
+#include <string.h>
 #include "screen.h"
 #include "instruments.h"
 #include "song.h"
@@ -22,6 +24,12 @@ uint8_t current_instrument = 0; // Instrument index (0 = Piano)
 uint8_t current_octave = 3; // Adjusts in jumps of 12
 uint8_t active_midi_note = 0;      // Tracks the currently playing note
 uint8_t current_volume = 63; // Max volume (0x3F)
+
+// Export State (additional to those in opl.c)
+static char export_filename[16] = {0};
+static int export_fd = -1;
+static uint32_t export_total_bytes = 0;
+static bool export_song_ended = false;
 
 uint16_t get_pattern_xram_addr(uint8_t pat, uint8_t row, uint8_t chan) {
     // addr = (pat * 1440) + (row * 45) + (chan * 5)
@@ -69,6 +77,170 @@ static int8_t get_semitone(uint8_t scancode) {
     }
 }
 
+// ============================================================================
+// EXPORT FUNCTIONS
+// ============================================================================
+
+static void flush_export_buffer(void) {
+    if (export_idx == 0) return; // Nothing to flush
+    
+    // Write current buffer to disk
+    write_xram(EXPORT_BUF_XRAM, export_idx, export_fd);
+    export_total_bytes += export_idx;
+    
+    // Reset buffer pointer
+    export_idx = 0;
+}
+
+static void derive_export_filename(void) {
+    // Start with the active tracker filename
+    if (active_filename[0] == '\0') {
+        // No filename set, use default
+        strcpy(export_filename, "UNTITLED.BIN");
+        return;
+    }
+    
+    // Copy filename and replace extension
+    strcpy(export_filename, active_filename);
+    
+    // Find the dot or end of string
+    char *dot = strchr(export_filename, '.');
+    if (dot) {
+        strcpy(dot, ".BIN");
+    } else {
+        strcat(export_filename, ".BIN");
+    }
+}
+
+static void start_export(void) {
+    printf("Starting export...\n");
+    
+    // Derive filename
+    derive_export_filename();
+    printf("Export to: %s\n", export_filename);
+    
+    // Open file for writing
+    export_fd = open(export_filename, O_WRONLY | O_CREAT | O_TRUNC);
+    if (export_fd < 0) {
+        printf("Error: Cannot create export file\n");
+        return;
+    }
+    
+    // Initialize export state
+    is_exporting = true;
+    export_idx = 0;
+    accumulated_delay = 0;
+    export_total_bytes = 0;
+    export_song_ended = false;
+    
+    // Force song mode and reset to beginning
+    is_song_mode = true;
+    cur_order_idx = 0;
+    play_row = 0;
+    seq.is_playing = true;
+    seq.tick_counter = 0;
+    
+    // Clear all effect states
+    for (int i = 0; i < 9; i++) {
+        last_effect[i] = 0xFFFF;
+        ch_arp[i].active = false;
+        ch_porta[i].active = false;
+        ch_volslide[i].active = false;
+        ch_vibrato[i].active = false;
+        ch_notecut[i].active = false;
+        ch_notedelay[i].active = false;
+        ch_retrigger[i].active = false;
+        ch_tremolo[i].active = false;
+        ch_finepitch[i].active = false;
+        ch_generator[i].active = false;
+    }
+    
+    // Load first pattern
+    cur_pattern = read_order_xram(cur_order_idx);
+    
+    printf("Exporting song...\n");
+}
+
+static void finish_export(void) {
+    // Write end marker: 0xFF, 0xFF, 0x00, 0x00
+    RIA.addr0 = EXPORT_BUF_XRAM + export_idx;
+    RIA.step0 = 1;
+    RIA.rw0 = 0xFF;
+    RIA.rw0 = 0xFF;
+    RIA.rw0 = 0x00;
+    RIA.rw0 = 0x00;
+    export_idx += 4;
+    
+    // Flush remaining data
+    flush_export_buffer();
+    
+    // Pad to 512-byte boundary
+    uint16_t remainder = export_total_bytes % 512;
+    if (remainder != 0) {
+        uint16_t padding = 512 - remainder;
+        
+        // Fill buffer with zeros
+        RIA.addr0 = EXPORT_BUF_XRAM;
+        RIA.step0 = 1;
+        for (uint16_t i = 0; i < padding; i++) {
+            RIA.rw0 = 0x00;
+        }
+        
+        // Write padding
+        write_xram(EXPORT_BUF_XRAM, padding, export_fd);
+        export_total_bytes += padding;
+    }
+    
+    // Close file
+    close(export_fd);
+    export_fd = -1;
+    
+    // Reset export state
+    is_exporting = false;
+    seq.is_playing = false;
+    
+    printf("Export complete: %lu bytes\n", (unsigned long)export_total_bytes);
+    printf("File: %s\n", export_filename);
+}
+
+static void export_loop(void) {
+    // Track starting order to detect loop
+    uint8_t start_order = cur_order_idx;
+    bool seen_end = false;
+    
+    // Run sequencer until song ends
+    while (is_exporting) {
+        // Increment delay counter each frame
+        accumulated_delay++;
+        
+        // Run sequencer step
+        sequencer_step();
+        
+        // Check if buffer is getting full (leave room for end marker)
+        if (export_idx >= (EXPORT_CHUNK - 8)) {
+            flush_export_buffer();
+        }
+        
+        // Detect song end: when cur_order_idx wraps back to 0 after reaching song_length
+        if (cur_order_idx >= song_length - 1) {
+            seen_end = true;
+        }
+        
+        if (seen_end && cur_order_idx == 0 && play_row == 0) {
+            // Song has looped
+            finish_export();
+            break;
+        }
+        
+        // Safety: prevent infinite loop (max ~10 minutes at 60fps)
+        if (export_total_bytes > 36000) {
+            printf("Warning: Export size limit reached\n");
+            finish_export();
+            break;
+        }
+    }
+}
+
 void player_tick(void) {
     uint8_t channel = cur_channel; // Map piano to the active grid channel
     bool note_pressed_this_frame = false;
@@ -83,6 +255,12 @@ void player_tick(void) {
         }
         if (key_pressed(KEY_V)) {
             pattern_paste(cur_pattern);
+        }
+        if (key_pressed(KEY_E)) {
+            // Start binary export
+            start_export();
+            export_loop();
+            return;
         }
         
         if (active_midi_note != 0) {
