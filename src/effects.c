@@ -267,66 +267,25 @@ void process_volume_slide_logic(uint8_t ch) {
 
 void process_vibrato_logic(uint8_t ch) {
     if (!ch_vibrato[ch].active) return;
+    if (seq.tick_counter_fp == 0) return;
 
-    ch_vibrato[ch].tick_counter++;
+    uint16_t inc = (uint16_t)ch_vibrato[ch].rate * lfo_tempo_scaler;
+    ch_vibrato[ch].phase += (uint8_t)(inc >> 7);
 
-    // Rate controls how many ticks per phase update
-    uint8_t rate = ch_vibrato[ch].rate;
-    if (rate == 0) rate = 1;
-    
-    if (ch_vibrato[ch].tick_counter < rate) return;
+    int16_t lfo_val = 0;
+    uint8_t p = ch_vibrato[ch].phase;
+    uint8_t d = ch_vibrato[ch].depth;
 
-    ch_vibrato[ch].tick_counter = 0;
+    if (ch_vibrato[ch].waveform == 0)      lfo_val = (p < 128) ? (p / 8 - 8) : (8 - (p - 128) / 8);
+    else if (ch_vibrato[ch].waveform == 1) lfo_val = (p < 128) ? (p / 8 - 8) : (24 - p / 8 - 8);
+    else                                   lfo_val = (p < 128) ? 8 : -8;
 
-    // Update phase (0-255 represents full cycle)
-    ch_vibrato[ch].phase += 32; // Step through wave
+    // --- THE BOOST ---
+    // Dividing by 8 instead of 16.
+    // Result: If D=8, pitch swings +/- 1 semitone. If D=F, swings nearly +/- 2.
+    int8_t fine_offset = (int8_t)((lfo_val * (int16_t)d) / 8);
 
-    // Calculate pitch offset based on waveform
-    int8_t offset = 0;
-    uint8_t phase = ch_vibrato[ch].phase;
-    uint8_t depth = ch_vibrato[ch].depth;
-    
-    if (depth == 0) depth = 1;
-
-    switch (ch_vibrato[ch].waveform) {
-        case 0: // Sine wave (approximation)
-            if (phase < 64) {
-                offset = (phase * depth) / 64;
-            } else if (phase < 128) {
-                offset = (((127 - phase) * depth) / 64);
-            } else if (phase < 192) {
-                offset = -((phase - 128) * depth) / 64;
-            } else {
-                offset = -(((255 - phase) * depth) / 64);
-            }
-            break;
-            
-        case 1: // Triangle wave
-            if (phase < 128) {
-                offset = (phase * depth) / 128;
-            } else {
-                offset = (((255 - phase) * depth) / 128);
-            }
-            offset -= depth / 2; // Center around 0
-            break;
-            
-        case 2: // Square wave
-            offset = (phase < 128) ? depth : -depth;
-            break;
-            
-        default: // Sine
-            offset = 0;
-            break;
-    }
-
-    // Apply pitch offset
-    int16_t new_note = (int16_t)ch_vibrato[ch].base_note + offset;
-    if (new_note < 0) new_note = 0;
-    if (new_note > 127) new_note = 127;
-
-    // Change pitch without retriggering note
-    OPL_SetPitch(ch, (uint8_t)new_note);
-    // Volume stays the same, no need to update
+    OPL_SetPitch_Fine(ch, ch_vibrato[ch].base_note, fine_offset);
 }
 
 void process_notecut_logic(uint8_t ch) {
@@ -405,63 +364,28 @@ void process_retrigger_logic(uint8_t ch) {
 
 void process_tremolo_logic(uint8_t ch) {
     if (!ch_tremolo[ch].active) return;
+    if (seq.tick_counter_fp == 0) return;
 
-    // --- TICK 0 GUARD ---
-    // Let the sequencer handle the initial volume setting on Tick 0.
-    if (seq.tick_counter_fp < TICK_SCALE) return;
+    uint16_t inc = (uint16_t)ch_tremolo[ch].rate * lfo_tempo_scaler;
+    ch_tremolo[ch].phase += (uint8_t)(inc >> 7);
 
-    // 1. ADVANCE PHASE
-    // Rate (R) now controls how much we add to the phase every frame.
-    // Higher R = faster pulsing.
-    uint8_t rate = ch_tremolo[ch].rate;
-    if (rate == 0) rate = 1; 
-    ch_tremolo[ch].phase += (rate * 4); // Scale factor of 4 for musical speeds
+    int16_t lfo_val = 0;
+    uint8_t p = ch_tremolo[ch].phase;
+    if (ch_tremolo[ch].waveform == 0)      lfo_val = (p < 128) ? (p / 8 - 8) : (8 - (p - 128) / 8);
+    else if (ch_tremolo[ch].waveform == 1) lfo_val = (p < 128) ? (p / 8 - 8) : (24 - p / 8 - 8);
+    else                                   lfo_val = (p < 128) ? 8 : -8;
 
-    // 2. CALCULATE LFO OUTPUT
-    // We want a value ranging from -Depth to +Depth
-    int16_t lfo_out = 0;
-    uint8_t phase = ch_tremolo[ch].phase;
-    uint8_t depth = ch_tremolo[ch].depth;
+    // --- THE BOOST ---
+    // We multiply by Depth and divide by 4.
+    // Now D=4 creates a pulsing of +/- 8 volume units (out of 63). 
+    // D=F will create a very heavy pulse of +/- 30 units.
+    int16_t vol_offset = (lfo_val * (int16_t)ch_tremolo[ch].depth) / 4;
+    int16_t new_vol = (int16_t)ch_tremolo[ch].base_vol + vol_offset;
 
-    switch (ch_tremolo[ch].waveform) {
-        case 0: // SINE (High-res approximation)
-            if (phase < 128) {
-                lfo_out = (phase * depth) / 64 - depth;
-            } else {
-                lfo_out = depth - ((phase - 128) * depth) / 64;
-            }
-            break;
-            
-        case 1: // TRIANGLE
-            if (phase < 128) {
-                lfo_out = (phase * depth * 2) / 128 - depth;
-            } else {
-                lfo_out = depth - ((phase - 128) * depth * 2) / 128;
-            }
-            break;
-            
-        case 2: // SQUARE
-            lfo_out = (phase < 128) ? depth : -depth;
-            break;
-
-        case 3: // SAWTOOTH
-            lfo_out = (phase * depth * 2) / 255 - depth;
-            break;
-    }
-
-    // 3. APPLY TO BASE VOLUME
-    int16_t new_vol = (int16_t)ch_tremolo[ch].base_vol + lfo_out;
-
-    // 4. STRICT CLAMPING (0-63)
-    // This prevents the 'cycle back on' bug
     if (new_vol < 0)  new_vol = 0;
     if (new_vol > 63) new_vol = 63;
 
-    // 5. OUTPUT TO HARDWARE
-    // Using your MIDI << 1 mapping
     OPL_SetVolume(ch, (uint8_t)new_vol << 1);
-    
-    // Update visual peaks
     ch_peaks[ch] = (uint8_t)new_vol;
 }
 

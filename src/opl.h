@@ -39,6 +39,7 @@ extern void OPL_FifoClear();
 extern void OPL_SilenceAll();
 extern void OPL_Config(uint8_t enable, uint16_t addr);
 extern void OPL_SetPitch(uint8_t channel, uint8_t midi_note);
+extern void OPL_SetPitch_Fine(uint8_t channel, uint8_t midi_note, int8_t fine_offset);
 extern void OPL_NoteOn_Detuned(uint8_t channel, uint8_t midi_note, int8_t detune);
 extern void OPL_Panic();
 

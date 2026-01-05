@@ -11,6 +11,19 @@
 #include "song.h"
 #include "effects.h"
 
+
+// Unity (1.0) is 256. 
+// This scales LFO speeds relative to our 150 BPM baseline.
+uint16_t lfo_tempo_scaler = 256;
+
+void update_lfo_scaler(void) {
+    // Math: (Baseline_FP << 8) / Current_FP
+    // 1536 << 8 = 393216
+    if (seq.ticks_per_row_fp > 0) {
+        lfo_tempo_scaler = (uint16_t)(393216L / seq.ticks_per_row_fp);
+    }
+}
+
 // UI Toggle: false = Volume/Instrument, true = 16-bit Effect
 bool effect_view_mode = false;
 uint16_t last_effect[9] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
@@ -92,6 +105,9 @@ uint16_t bpm_to_ticks_fp(uint8_t bpm) {
     // Use 32-bit math to avoid overflow: (900 * 256) / bpm
     uint32_t ticks = ((uint32_t)230400) / bpm;
     return (uint16_t)ticks;
+
+    // Update LFO scaler
+    update_lfo_scaler();
 }
 
 // ============================================================================

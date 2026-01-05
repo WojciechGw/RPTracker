@@ -39,6 +39,7 @@ extern uint8_t player_channel;
 extern uint8_t current_volume;
 extern bool effect_view_mode;
 extern uint16_t last_effect[9];
+extern uint16_t lfo_tempo_scaler;
 
 extern void handle_navigation(void);
 extern void handle_transport_controls(void);
@@ -52,6 +53,7 @@ extern void change_pattern(int8_t delta);
 extern void handle_song_order_input(void);
 extern void pattern_copy(uint8_t pattern_id);
 extern void pattern_paste(uint8_t pattern_id);
+extern void update_lfo_scaler(void);
 
 extern uint16_t get_pattern_xram_addr(uint8_t pat, uint8_t row, uint8_t chan);
 extern uint8_t active_midi_note;

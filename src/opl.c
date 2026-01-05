@@ -147,6 +147,28 @@ void OPL_NoteOn(uint8_t channel, uint8_t midi_note) {
     shadow_b0[channel] = b0_value;  // Store FULL value including key-on bit
 }
 
+void OPL_SetPitch_Fine(uint8_t channel, uint8_t midi_note, int8_t fine_offset) {
+    if (channel > 8) return;
+
+    uint16_t freq = midi_to_opl_freq(midi_note);
+    uint16_t fnum = freq & 0x3FF; 
+    uint8_t block = (freq >> 10) & 0x07; 
+
+    // --- THE BOOST ---
+    // Change multiplier from 2 to 4. 
+    // Now a fine_offset of 8 shifts the F-Number by 32 (approx 1 full semitone).
+    int16_t adjusted_fnum = (int16_t)fnum + (fine_offset * 4);
+
+    if (adjusted_fnum < 1) adjusted_fnum = 1;
+    if (adjusted_fnum > 1023) adjusted_fnum = 1023;
+
+    OPL_Write(0xA0 + channel, adjusted_fnum & 0xFF);
+    uint8_t b_val = 0x20 | (block << 2) | ((adjusted_fnum >> 8) & 0x03);
+    OPL_Write(0xB0 + channel, b_val);
+    
+    shadow_b0[channel] = b_val & 0x1F;
+}
+
 void OPL_SetPitch(uint8_t channel, uint8_t midi_note) {
     if (channel > 8) return;
 

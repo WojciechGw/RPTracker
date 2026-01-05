@@ -96,6 +96,8 @@ int main(void)
     render_grid();       // Initial grid draw
     update_cursor_visuals(0, 0, 0 ,0); // Initial cursor at 0,0
     mark_playhead(0);
+    update_lfo_scaler(); // Set initial LFO scaler based on BPM
+    
 
     // 4. Software Initialization
     init_input_system(); 
