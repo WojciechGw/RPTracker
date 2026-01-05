@@ -8,8 +8,8 @@ typedef struct {
     uint8_t style;
     uint8_t depth;
     uint8_t speed_idx;   // The T nibble (0-F)
-    uint8_t target_ticks; // Value from LUT
-    uint8_t phase_timer;  // Accumulator
+    uint16_t target_ticks_fp; // Now 8.8 fixed point
+    uint16_t phase_timer_fp;  // Now 8.8 fixed point
     uint8_t step_index;  
     bool    active;
     bool    just_triggered; // Prevents double-hit on same frame

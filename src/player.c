@@ -520,18 +520,18 @@ void sequencer_step(void) {
                     ch_arp[ch].depth  = (eff >> 4) & 0x0F;
                     ch_arp[ch].speed_idx = (eff & 0x0F);
                     
-                    // Scale arpeggio timing with tempo:
-                    // arp_tick_lut is in frames at 150 BPM baseline (1536 = 6 frames/row)
-                    // Scale to current tempo: (base_frames * current_ticks_per_row_fp) / 1536
+                    // --- SCALE ARP TO TEMPO ---
+                    // base_frames is frames @ 150BPM (6 frames per row)
                     uint16_t base_frames = arp_tick_lut[ch_arp[ch].speed_idx];
-                    uint32_t scaled = ((uint32_t)base_frames * seq.ticks_per_row_fp) / 1536;
-                    ch_arp[ch].target_ticks = (uint8_t)scaled;
-                    if (ch_arp[ch].target_ticks == 0) ch_arp[ch].target_ticks = 1;
                     
-                    // ONLY reset phase if the command actually changed
-                    ch_arp[ch].phase_timer = 0;
+                    // We calculate the target in fixed point:
+                    // target = base_frames * (current_row_duration / 6)
+                    // (seq.ticks_per_row_fp / 6) is the duration of one "step" in the current tempo
+                    ch_arp[ch].target_ticks_fp = (uint16_t)(((uint32_t)base_frames * seq.ticks_per_row_fp) / 6);
+
+                    ch_arp[ch].phase_timer_fp = 0;
                     ch_arp[ch].step_index = 0;
-                    ch_arp[ch].just_triggered = true; // Mark as just started
+                    ch_arp[ch].just_triggered = true; // Prevent double-trigger on same row
                 } else if (cmd == 2) {
                     // Portamento: 2SDT
                     uint8_t mode = (eff >> 8) & 0x0F;
@@ -794,9 +794,9 @@ void sequencer_step(void) {
                     
                     // If we just triggered a new note, we reset the phase 
                     // so the melody remains predictable/on-beat.
-                    ch_arp[ch].phase_timer = 0;
+                    ch_arp[ch].phase_timer_fp = 0;
                     ch_arp[ch].step_index = 0;
-                    ch_arp[ch].just_triggered = true; // Prevent immediate re-trigger
+                    ch_arp[ch].just_triggered = true; // DO NOT strike mid-row logic this frame
 
                     // If the generator is active, update its memory with the new note/inst/vol
                     if (ch_generator[ch].active) {

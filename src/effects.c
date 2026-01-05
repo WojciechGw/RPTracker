@@ -136,29 +136,35 @@ int16_t get_arp_offset(uint8_t style, uint8_t depth, uint8_t index) {
 void process_arp_logic(uint8_t ch) {
     if (!ch_arp[ch].active) return;
 
-    // --- JUST TRIGGERED GUARD ---
-    // If this arpeggio was just activated or a note was just struck,
-    // skip processing this frame to avoid double-hit.
+    // --- FIX 1: THE HICCUP ---
+    // If the sequencer just struck a note, we consume the flag and return.
+    // This prevents the Arp from re-striking on the same frame as the row note.
     if (ch_arp[ch].just_triggered) {
         ch_arp[ch].just_triggered = false;
         return;
     }
 
-    ch_arp[ch].phase_timer++;
+    // --- FIX 2: THE SYNC DRIFT ---
+    // Increment timer by one fixed-point "frame" (256)
+    ch_arp[ch].phase_timer_fp += 256;
 
-    if (ch_arp[ch].phase_timer < ch_arp[ch].target_ticks) return;
+    // Check against the tempo-scaled target
+    if (ch_arp[ch].phase_timer_fp < ch_arp[ch].target_ticks_fp) return;
 
-    ch_arp[ch].phase_timer = 0;
+    // Reset and advance step
+    ch_arp[ch].phase_timer_fp = 0;
     ch_arp[ch].step_index++; 
 
     int16_t offset = get_arp_offset(ch_arp[ch].style, ch_arp[ch].depth, ch_arp[ch].step_index);
 
+    // Retrigger
     OPL_NoteOff(ch);
     OPL_SetPatch(ch, &gm_bank[ch_arp[ch].inst]);
     
-    // Use volume slide's current volume if active, otherwise use arp's original volume
+    // RETAIN: Your MIDI vol << 1 mapping
     uint8_t vol = ch_volslide[ch].active ? ch_volslide[ch].current_vol : ch_arp[ch].vol;
     OPL_SetVolume(ch, vol << 1); 
+    
     OPL_NoteOn(ch, ch_arp[ch].base_note + offset);
     ch_peaks[ch] = vol; 
 }
