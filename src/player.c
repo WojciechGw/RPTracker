@@ -367,7 +367,7 @@ void player_tick(void) {
                 seq.bpm--;
                 seq.ticks_per_row_fp = bpm_to_ticks_fp(seq.bpm);
                 update_dashboard();
-                draw_status_message("Tempo Changed");
+                // draw_status_message("Tempo Changed");
             }
         } else {
             // F7: Increase BPM
@@ -375,7 +375,7 @@ void player_tick(void) {
                 seq.bpm++;
                 seq.ticks_per_row_fp = bpm_to_ticks_fp(seq.bpm);
                 update_dashboard();
-                draw_status_message("Tempo Changed");
+                // draw_status_message("Tempo Changed");
             }
         }
     }

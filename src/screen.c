@@ -427,7 +427,7 @@ void draw_ui_dashboard(void) {
     draw_string(2, 8, "INS:    (                  )  VOL:     OCT:   ", HUD_COL_CYAN, HUD_COL_BG);
     
     // BPM Display (below INS:)
-    draw_string(2, 9, "BPM:     ", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(2, 9, "BPM:      TKS: 06", HUD_COL_CYAN, HUD_COL_BG);
 
     // 3. Operator Headers
     draw_string(2, 11, "[ MODULATOR / OP1 ]", HUD_COL_YELLOW, HUD_COL_BG);
@@ -467,7 +467,7 @@ void draw_ui_dashboard(void) {
     // Row 22: Editing & Tools
     draw_string(2, 22, "Inst    : F3/F4   Sequence  : F11/12   Vol/Effect : [ / ]   ", HUD_COL_CYAN, HUD_COL_BG);
     // Row 23: Tools & Effects
-    draw_string(2, 23, "Pick Ins: F5      Transpose : - / =    Effect Par : ; / '   Tempo: F7/Sh-F7", HUD_COL_CYAN, HUD_COL_BG);
+    draw_string(2, 23, "Pick Ins: F5      Transpose : - / =    Effect Par : ; / '    Tempo:       F7", HUD_COL_CYAN, HUD_COL_BG);
     // Row 24: Transport & Files
     draw_string(2, 24, "Play    : Enter   Copy/Paste: Ctrl+C/V Save/Load  : Ctrl+S/O", HUD_COL_CYAN, HUD_COL_BG);
     // Row 25: Mode & Safety
