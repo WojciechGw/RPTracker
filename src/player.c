@@ -44,8 +44,8 @@ uint16_t get_pattern_xram_addr(uint8_t pat, uint8_t row, uint8_t chan) {
 static uint8_t pattern_clipboard[PATTERN_SIZE];
 static bool clipboard_full = false;
 
-// Initialize: 125 BPM = 7.2 ticks/row in 8.8 fixed-point = 0x0733 (1843)
-SequencerState seq = {false, 0x0733, 0, 125};
+// Initialize: 150 BPM = 6.0 ticks/row in 8.8 fixed-point = 0x0600 (1536)
+SequencerState seq = {false, 0x0600, 0, 150};
 
 #define KEY_REPEAT_DELAY 20 // Frames before repeat starts
 #define KEY_REPEAT_RATE  4  // Frames between repeats
