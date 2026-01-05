@@ -183,47 +183,39 @@ Volume Slide uses 8.8 fixed-point math to create perfectly smooth fades.
 
 ---
 
-### 🎸 Effect Command 4: Vibrato (4RDT)
-Vibrato adds expressive pitch oscillation to sustained notes, creating warmth and character.
-The effect continuously modulates pitch using different waveforms at adjustable rates and depths.
+### 🎸 Effect Command 4: Synced Vibrato (4RDT)
+Vibrato adds expressive pitch oscillation to sustained notes. The effect is locked to the song tempo using a high-precision LFO that nudges the OPL2 F-Number without retriggering the note, ensuring a smooth "singing" quality.
 
 **Format: `4 R D T`**
 
 *   **4**: Command ID (Vibrato).
-*   **R (Rate)**: Oscillation speed - ticks per phase step (1-F):
-    *   `1`: Very fast vibrato (rapid warble)
-    *   `2-4`: Fast vibrato (noticeable oscillation)
-    *   `5-8`: Medium vibrato (musical default)
-    *   `9-C`: Slow vibrato (gentle wave)
-    *   `D-F`: Very slow vibrato (subtle modulation)
-    *   Lower values = faster oscillation
+*   **R (Rate)**: Oscillation speed (1-F):
+    *   `1-4`: Slow, graceful vibrato (ideal for strings and pads).
+    *   `5-9`: Medium, musical vibrato (standard lead default).
+    *   `A-F`: Fast, frantic vibrato (intense or specialized effects).
+    *   *Note: Rate scales automatically with BPM to stay in sync with the beat.*
     
-*   **D (Depth)**: Pitch deviation in semitones (1-F):
-    *   `1-2`: Subtle vibrato (smooth, realistic)
-    *   `3-5`: Medium vibrato (expressive, musical)
-    *   `6-9`: Wide vibrato (dramatic)
-    *   `A-F`: Very wide vibrato (extreme effect)
+*   **D (Depth)**: Intensity of the pitch swing (1-F):
+    *   `1-3`: Subtle shimmer (adds warmth).
+    *   `4-8`: Musical swing (±1 semitone range).
+    *   `9-F`: Heavy siren (dramatic pitch variation).
 
 *   **T (Waveform)**: The oscillation shape:
-    *   `0`: **SINE** - Smooth, natural vibrato (default)
-    *   `1`: **TRIANGLE** - Linear rise/fall (vintage synth)
-    *   `2`: **SQUARE** - Abrupt pitch jumps (trill effect)
-    *   Other values wrap to 0-2
+    *   `0`: **SINE** - Natural, smooth modulation.
+    *   `1`: **TRIANGLE** - Linear "wah-wah" feel.
+    *   `2`: **SQUARE** - Alternating trill between two pitches.
 
 **Usage:**
-- `4420`: Classic vibrato - medium rate, 2 semitones, sine wave (leads/vocals).
-- `4230`: Fast subtle vibrato - quick rate, 3 semitones, sine (strings).
-- `4651`: Wide slow vibrato - slow rate, 5 semitones, triangle (pads).
-- `4322`: Medium vibrato with square wave for trill effect.
-- `4A10`: Ultra-slow, subtle sine vibrato for atmospheric textures.
+- `4420`: Classic musical vibrato - moderate rate, subtle depth, sine wave.
+- `4130`: Slow, deep pitch swell for atmospheric pads.
+- `4A80`: High-speed, heavy vibrato for aggressive FM leads.
+- `4822`: Rhythmic square-wave trill.
 - `F000` or `0000`: Stop vibrato effect.
 
 **Notes:**
-- Vibrato and Arpeggio are mutually exclusive - activating one disables the other.
-- Vibrato works independently with portamento and volume slide.
-- Continuous effect - runs until explicitly stopped or note changes.
-- Perfect for leads, pads, strings, and adding life to sustained notes.
-- Combine with Note Off (`===`) for creative pitch drops.
+- **Smooth Transition:** Uses `OPL_SetPitch_Fine` to prevent "clicking" or "beeping" during oscillation.
+- **Mutually Exclusive:** Activating Vibrato disables any running Arpeggio or Portamento on that channel.
+- **Persistence:** Vibrato continues across empty rows (`0000`) until the note ends or is stopped via `F000`.
 
 ---
 
@@ -315,44 +307,39 @@ Essential for drum rolls, glitchy effects, and rhythmic intensity.
 
 ---
 
-### 📢 Effect Command 8: Tremolo (8RDT)
-Tremolo adds volume oscillation to sustained notes, creating pulsing, rhythmic movement, and texture.
-The volume counterpart to vibrato - essential for pads, rhythmic effects, and dynamic expression.
+### 📢 Effect Command 8: Synced Tremolo (8RDT)
+Tremolo adds volume oscillation to sustained notes, creating rhythmic pulsing and "gating" effects. Like vibrato, it is perfectly synced to the BPM, making it a powerful tool for electronic and techno textures.
 
 **Format: `8 R D T`**
 
 *   **8**: Command ID (Tremolo).
-*   **R (Rate)**: Oscillation speed - ticks per phase step (1-F):
-    *   `1`: Very fast tremolo (rapid pulsing)
-    *   `2-4`: Fast tremolo (noticeable rhythm)
-    *   `5-8`: Medium tremolo (musical pulsing)
-    *   `9-C`: Slow tremolo (gentle wave)
-    *   `D-F`: Very slow tremolo (subtle movement)
+*   **R (Rate)**: Pulsing speed (1-F):
+    *   `1-4`: Slow swells and rhythmic breathing.
+    *   `5-9`: Standard rhythmic pulsing.
+    *   `A-F`: Fast "helicopter" or "flutter" effects.
+    *   *Note: Rate scales automatically with BPM to stay in sync with the beat.*
     
-*   **D (Depth)**: Volume deviation (1-F):
-    *   `1-2`: Subtle tremolo (gentle pulsing)
-    *   `3-5`: Medium tremolo (noticeable dynamics)
-    *   `6-9`: Wide tremolo (dramatic pulsing)
-    *   `A-F`: Very wide tremolo (extreme effect)
-    *   `0`: Defaults to 4
+*   **D (Depth)**: Intensity of the volume change (1-F):
+    *   `1-4`: Subtle pulsing (adds movement to pads).
+    *   `5-9`: Distinct rhythmic volume shifts.
+    *   `A-F`: Full "On/Off" gating (dramatic dynamic effect).
 
 *   **T (Waveform)**: The oscillation shape:
-    *   `0`: **SINE** - Smooth, natural tremolo
-    *   `1`: **TRIANGLE** - Linear rise/fall
-    *   `2`: **SQUARE** - Abrupt volume jumps (gating effect)
+    *   `0`: **SINE** - Smooth, rounded volume pulses.
+    *   `1`: **TRIANGLE** - Constant rising and falling volume.
+    *   `2`: **SQUARE** - Sharp rhythmic "chopping" (Trance gate effect).
 
 **Usage:**
-- `8440`: Classic tremolo - medium rate, 4 units depth, sine (pads/strings).
-- `8230`: Fast subtle tremolo for rhythmic movement.
-- `8652`: Wide slow tremolo with square wave (gating effect).
-- `8320`: Medium tremolo for expressive pulsing.
-- `8A10`: Ultra-slow subtle tremolo for texture.
+- `8440`: Classic tremolo - moderate rate and depth, sine wave.
+- `88F2`: Fast, total square-wave gate (Techno/Hardstyle pulsing).
+- `8130`: Very slow, subtle volume "breathing" for background chords.
+- `8681`: Rhythmic triangle-wave pulse.
+- `F000` or `0000`: Stop tremolo effect.
 
 **Notes:**
-- Works independently with all other effects.
-- Perfect for pads, organs, strings, and rhythmic textures.
-- Combine with vibrato for complex modulation.
-- Continuous effect until explicitly stopped.
+- **Independent Logic:** Tremolo can run simultaneously with Vibrato, Arpeggio, or Portamento.
+- **Safety:** Automatically clamps to OPL2 volume limits (0-63) to prevent audio glitches.
+- **Visuals:** The dashboard channel meters (`METERS`) will bounce in real-time with the tremolo effect.
 
 ---
 
