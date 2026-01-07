@@ -71,8 +71,13 @@ uint16_t midi_to_opl_freq(uint8_t midi_note) {
 }
 
 void OPL_Write(uint8_t reg, uint8_t data) {
+    // During export, always write note on/off commands (0xB0-0xB8)
+    // to ensure proper timing even if shadow thinks it's redundant
+    bool is_note_onoff_reg = (reg >= 0xB0 && reg <= 0xB8);
+    bool bypass_shadow = is_exporting && is_note_onoff_reg;
+    
     // Check if the hardware already has this value
-    if (opl_hardware_shadow[reg] == data) {
+    if (!bypass_shadow && opl_hardware_shadow[reg] == data) {
         return;
     }
 
@@ -191,10 +196,15 @@ void OPL_SetPitch(uint8_t channel, uint8_t midi_note) {
 void OPL_NoteOff(uint8_t channel) {
     if (channel > 8) return;
 
-    // Kill the Arp logic for this channel immediately
-    // ch_arp[channel].active = false;
-
-    OPL_Write(0xB0 + channel, shadow_b0[channel] & 0x1F); // Write stored octave/freq with KeyOn=0
+    // Clear bit 5 (Key-On) while preserving block and F-number
+    uint8_t b0_value = shadow_b0[channel] & 0x1F; // Clear key-on bit (bit 5)
+    
+    // Even if shadow is 0, we still need to write it to ensure
+    // the export captures the note-off command
+    OPL_Write(0xB0 + channel, b0_value);
+    
+    // Update shadow to reflect key-off state
+    shadow_b0[channel] = b0_value;
 }
 
 // Clear all 256 registers correctly
